@@ -3,7 +3,54 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+ * Design tokens from the Figma "00-design-system" frame:
+ * light mode, Inter, radius 12, 8px grid.
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --color-canvas: #f3f6fa;
+    --color-line: #d5deea;
+    --color-line-soft: #e6ecf4;
+    --color-hover: #e8eef6;
+
+    --color-primary: #1d4e89;
+    --color-primary-dark: #12345a;
+    --color-teal: #19a7a0;
+
+    --color-success: #16a34a;
+    --color-danger: #dc2626;
+    --color-danger-dark: #b91c1c;
+    --color-warning: #d97706;
+    --color-info: #2563eb;
+
+    --color-ink: #1f2937;
+    --color-body: #334155;
+    --color-muted: #64748b;
+
+    --color-sidebar: #12345a;
+    --color-sidebar-line: #24466f;
+    --color-sidebar-text: #b8c7db;
+    --color-sidebar-icon: #a9bbd3;
+    --color-sidebar-muted: #8fa6c4;
+    --color-sidebar-label: #6f89ab;
+
+    --color-overlay: #0b1f3a;
+}
+
+@layer base {
+    dialog::backdrop {
+        background-color: color-mix(in srgb, var(--color-overlay) 45%, transparent);
+    }
+
+    details > summary {
+        list-style: none;
+    }
+
+    details > summary::-webkit-details-marker {
+        display: none;
+    }
 }
