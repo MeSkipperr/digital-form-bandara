@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AlatController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -9,9 +10,12 @@ Route::get('/', function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::view('/dasbor', 'admin.dasbor')->name('dasbor');
     Route::view('/pengguna', 'admin.pengguna.index')->name('pengguna.index');
-    Route::view('/alat', 'admin.alat.index')->name('alat.index');
-    Route::view('/alat/{alat}', 'admin.alat.show')->name('alat.show');
-    Route::view('/alat/{alat}/form', 'admin.alat.form')->name('alat.form.index');
-    Route::view('/alat/{alat}/form/{form}', 'admin.alat.task')->name('alat.form.task');
+    Route::get('/alat', [AlatController::class, 'index'])->name('alat.index');
+    Route::post('/alat', [AlatController::class, 'store'])->name('alat.store');
+    Route::get('/alat/{alat}', [AlatController::class, 'show'])->name('alat.show');
+    Route::put('/alat/{alat}', [AlatController::class, 'update'])->name('alat.update');
+    Route::delete('/alat/{alat}', [AlatController::class, 'destroy'])->name('alat.destroy');
+    Route::get('/alat/{alat}/form', [AlatController::class, 'formIndex'])->name('alat.form.index');
+    Route::get('/alat/{alat}/form/{form}', [AlatController::class, 'task'])->whereNumber('form')->name('alat.form.task');
     Route::view('/riwayat', 'admin.riwayat.index')->name('riwayat.index');
 });

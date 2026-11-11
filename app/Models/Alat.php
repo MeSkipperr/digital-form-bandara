@@ -18,6 +18,16 @@ class Alat extends Model
     use HasFactory;
 
     /**
+     * Label and badge color for each value of the `status` enum.
+     *
+     * @var array<string, array{label: string, warna: string}>
+     */
+    public const DAFTAR_STATUS = [
+        'bagus' => ['label' => 'Bagus', 'warna' => '#16A34A'],
+        'perlu_perbaikan' => ['label' => 'Perlu Perbaikan', 'warna' => '#D97706'],
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

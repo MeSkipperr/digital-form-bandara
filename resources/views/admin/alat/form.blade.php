@@ -1,7 +1,5 @@
 @php
-    $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-    $idAlat = request()->route('alat');
-    $alat = $contoh['alat'][$idAlat] ?? abort(404);
+    $idAlat = $alat->id;
 @endphp
 
 <x-layouts.admin title="Kelola Form" active="alat">
@@ -11,7 +9,7 @@
     <p class="mt-1.5 text-[13px] text-muted">{{ $idAlat }}, {{ $alat['model'] }}</p>
 
     <div class="mt-5 grid grid-cols-3 gap-7">
-        @foreach ($contoh['form'] as $idForm => $form)
+        @foreach ($daftarForm as $idForm => $form)
             <x-card class="p-4">
                 <img src="{{ asset($form['gambar']) }}" alt="Gambar {{ $form['nama'] }}" class="h-30 w-full rounded-md object-cover">
                 <p class="mt-4.5 text-sm font-bold text-ink">{{ $form['nama'] }}</p>

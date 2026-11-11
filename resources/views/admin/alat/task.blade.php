@@ -1,9 +1,5 @@
 @php
-    $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-    $idAlat = request()->route('alat');
-    $form = $contoh['form'][(int) request()->route('form')] ?? abort(404);
-    abort_unless(isset($contoh['alat'][$idAlat]), 404);
-    $daftarTask = $contoh['task'];
+    $idAlat = $alat->id;
 @endphp
 
 <x-layouts.admin title="Kelola Task" active="alat">

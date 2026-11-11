@@ -1,10 +1,6 @@
 @php
-    $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-    $idAlat = request()->route('alat');
-    $alat = $contoh['alat'][$idAlat] ?? abort(404);
-    $status = $contoh['status'][$alat['status']];
-    $daftarKategori = $contoh['kategori'];
-    $daftarForm = array_slice($contoh['form'], 0, 3, true);
+    $idAlat = $alat->id;
+    $status = $daftarStatus[$alat->status];
 @endphp
 
 <x-layouts.admin title="Detail Alat" active="alat">
@@ -27,11 +23,11 @@
                 @foreach ([
                     'Model' => $alat['model'],
                     'ID Alat' => $idAlat,
-                    'Kategori' => $daftarKategori[$alat['id_kategori_alat']],
+                    'Kategori' => $alat->kategoriAlat->nama,
                     'Lokasi' => $alat['lokasi'],
                     'Status' => null,
                     'Deskripsi' => $alat['deskripsi'],
-                    'Dibuat pada' => $alat['dibuat_pada'],
+                    'Dibuat pada' => $alat->dibuat_pada?->format('d M Y, H:i'),
                 ] as $label => $nilai)
                     <div class="flex items-start py-4.5">
                         <dt class="w-42 shrink-0 text-[13px] text-muted">{{ $label }}</dt>
@@ -79,7 +75,7 @@
 
     <x-slot:modals>
         <x-modal id="modal-ubah-alat" title="Ubah Alat">
-            @include('admin.alat.partials.form-alat', ['idAlat' => $idAlat, 'alat' => $alat, 'daftarKategori' => $daftarKategori])
+            @include('admin.alat.partials.form-alat', ['alat' => $alat, 'daftarKategori' => $daftarKategori])
         </x-modal>
 
         @include('admin.alat.partials.modal-tambah-kategori')

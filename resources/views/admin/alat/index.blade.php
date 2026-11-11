@@ -1,21 +1,3 @@
-@php
-    $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-    $daftarStatus = $contoh['status'];
-    $daftarKategori = $contoh['kategori'];
-
-    $kataKunci = mb_strtolower(trim((string) request()->query('cari')));
-    $kategoriAktif = request()->query('kategori');
-    $statusAktif = request()->query('status');
-
-    $daftarAlat = array_filter(
-        $contoh['alat'],
-        fn (array $alat, string $id): bool => ($kataKunci === '' || str_contains(mb_strtolower($id.' '.$alat['model'].' '.$alat['lokasi']), $kataKunci))
-            && (blank($kategoriAktif) || (string) $alat['id_kategori_alat'] === (string) $kategoriAktif)
-            && (blank($statusAktif) || $alat['status'] === $statusAktif),
-        ARRAY_FILTER_USE_BOTH,
-    );
-@endphp
-
 <x-layouts.admin title="Kelola Alat" active="alat">
     <form method="get" class="flex items-center gap-3" data-auto-submit>
         <x-search-input placeholder="Cari ID, model, lokasi" class="mr-2 w-75" />
@@ -41,17 +23,18 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-line-soft">
-                @forelse ($daftarAlat as $id => $alat)
+                @forelse ($daftarAlat as $alat)
+                    @php $id = $alat->id; @endphp
                     <tr class="h-15 hover:bg-hover/60">
                         <td class="px-6 font-mono text-sm font-bold text-ink">{{ $id }}</td>
                         <td class="text-sm text-ink">{{ $alat['model'] }}</td>
-                        <td class="text-sm text-ink">{{ $daftarKategori[$alat['id_kategori_alat']] }}</td>
+                        <td class="text-sm text-ink">{{ $alat->kategoriAlat->nama }}</td>
                         <td><x-badge :color="$daftarStatus[$alat['status']]['warna']" :label="$daftarStatus[$alat['status']]['label']" /></td>
                         <td class="text-sm text-ink">{{ $alat['lokasi'] }}</td>
                         <td class="px-6 text-right">
                             <x-action-menu>
                                 <x-action-menu.item data-modal-open="modal-ubah-alat-{{ $id }}">Ubah</x-action-menu.item>
-                                <x-action-menu.item danger>Hapus</x-action-menu.item>
+                                <x-action-menu.item danger data-modal-open="modal-hapus-alat-{{ $id }}">Hapus</x-action-menu.item>
                                 <x-action-menu.item :href="route('admin.alat.show', $id)">Detail</x-action-menu.item>
                             </x-action-menu>
                         </td>
@@ -70,9 +53,17 @@
             @include('admin.alat.partials.form-alat', ['daftarKategori' => $daftarKategori])
         </x-modal>
 
-        @foreach ($daftarAlat as $id => $alat)
-            <x-modal id="modal-ubah-alat-{{ $id }}" title="Ubah Alat">
-                @include('admin.alat.partials.form-alat', ['idAlat' => $id, 'alat' => $alat, 'daftarKategori' => $daftarKategori])
+        @foreach ($daftarAlat as $alat)
+            <x-modal id="modal-ubah-alat-{{ $alat->id }}" title="Ubah Alat">
+                @include('admin.alat.partials.form-alat', ['alat' => $alat, 'daftarKategori' => $daftarKategori])
+            </x-modal>
+            <x-modal id="modal-hapus-alat-{{ $alat->id }}" title="Hapus Alat" description="Alat {{ $alat->id }} akan dihapus permanen.">
+                <form method="post" action="{{ route('admin.alat.destroy', $alat) }}" class="mt-4 flex items-center justify-end gap-3">
+                    @csrf
+                    @method('delete')
+                    <x-button variant="secondary" class="w-25" data-modal-close>Batal</x-button>
+                    <x-button type="submit" class="w-30">Hapus</x-button>
+                </form>
             </x-modal>
         @endforeach
 
