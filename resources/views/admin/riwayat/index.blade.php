@@ -13,7 +13,7 @@
                     <x-table-heading class="w-36.5">Status</x-table-heading>
                     <x-table-heading class="w-65 px-0">Judul</x-table-heading>
                     <x-table-heading class="px-0">Catatan</x-table-heading>
-                    <x-table-heading class="w-22 pl-0 text-right">Gambar</x-table-heading>
+                    <x-table-heading class="w-22 px-6 text-right"><span class="sr-only">Aksi</span></x-table-heading>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line-soft">
@@ -31,10 +31,10 @@
                             <p class="mt-1 font-mono text-xs text-muted">{{ $riwayat->formAlat->id_alat }}</p>
                         </td>
                         <td class="text-sm text-ink">{{ $riwayat->catatan ?? '-' }}</td>
-                        <td class="px-6">
-                            @if ($gambar)
-                                <img src="{{ asset('storage/'.$gambar) }}" alt="Gambar {{ $judul }}" class="ml-auto h-11 w-16 rounded-md border border-line object-cover">
-                            @endif
+                        <td class="px-6 text-right">
+                            <button type="button" class="inline-flex size-9 items-center justify-center rounded-lg text-muted hover:bg-hover hover:text-primary" data-modal-open="panel-riwayat-{{ $id }}" aria-label="Lihat detail pengecekan {{ $judul }}">
+                                <x-icon name="lihat" class="size-5" />
+                            </button>
                         </td>
                     </tr>
                 @empty
