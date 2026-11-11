@@ -1,0 +1,30 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('sesi_pengguna', function (Blueprint $table) {
+            $table->string('token')->primary();
+            $table->string('id_pengguna', 20);
+            $table->timestamp('aktif_sampai');
+
+            $table->foreign('id_pengguna', 'fk_sesi_pengguna')->references('id')->on('pengguna');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('sesi_pengguna');
+    }
+};
