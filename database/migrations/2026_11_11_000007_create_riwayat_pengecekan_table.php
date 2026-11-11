@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('id_form_alat')->constrained('form_alat', indexName: 'fk_riwayat_form_alat');
             $table->string('id_pengguna', 20)->nullable();
             $table->text('catatan')->nullable();
-            $table->enum('status', ['bagus', 'kurang_bagus', 'tertunda', 'terlewati']);
+            $table->enum('status', ['bagus', 'kurang_bagus', 'tertunda', 'terlewati'])->default('tertunda');
             $table->timestamp('dicek_pada')->nullable();
 
             $table->foreign('id_pengguna', 'fk_riwayat_pengguna')->references('id')->on('pengguna');

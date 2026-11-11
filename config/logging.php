@@ -73,6 +73,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'riwayat_pengecekan' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/riwayat-pengecekan.log'),
+            'level' => 'info',
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

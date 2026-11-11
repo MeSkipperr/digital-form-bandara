@@ -73,9 +73,17 @@ class RiwayatPengecekanFactory extends Factory
         return $this->status('kurang_bagus');
     }
 
+    /**
+     * A pending inspection that nobody has checked yet.
+     */
     public function tertunda(): static
     {
-        return $this->status('tertunda');
+        return $this->state(fn (array $attributes) => [
+            'id_pengguna' => null,
+            'catatan' => null,
+            'status' => 'tertunda',
+            'dicek_pada' => null,
+        ]);
     }
 
     public function terlewati(): static

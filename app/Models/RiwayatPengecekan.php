@@ -17,6 +17,15 @@ class RiwayatPengecekan extends Model
     use HasFactory;
 
     /**
+     * The model's default values for attributes.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => 'tertunda',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

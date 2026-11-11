@@ -1,0 +1,44 @@
+[90m= [39m[34;4mIlluminate\Database\Eloquent\Collection[39;24m {#8035
+    [34mall[39m: [
+      [34;4mApp\Models\RiwayatPengecekan[39;24m {#7993
+        [34mid_form_alat[39m: [35m1[39m,
+        [34mid_pengguna[39m: [32m"[39m[32mKENA-028[39m[32m"[39m,
+        [34mcatatan[39m: [32m"[39m[32mSensor sering error saat uji objek[39m[32m"[39m,
+        [34mstatus[39m: [32m"[39m[32mkurang_bagus[39m[32m"[39m,
+        [34mdicek_pada[39m: [32m"[39m[32m2026-11-04 03:06:24[39m[32m"[39m,
+        [34mid[39m: [35m1[39m,
+      },
+      [34;4mApp\Models\RiwayatPengecekan[39;24m {#7992
+        [34mid_form_alat[39m: [35m2[39m,
+        [34mid_pengguna[39m: [32m"[39m[32mDIMA-348[39m[32m"[39m,
+        [34mcatatan[39m: [32m"[39m[32mAlarm berbunyi tanpa objek logam[39m[32m"[39m,
+        [34mstatus[39m: [32m"[39m[32mkurang_bagus[39m[32m"[39m,
+        [34mdicek_pada[39m: [32m"[39m[32m2026-11-06 00:55:07[39m[32m"[39m,
+        [34mid[39m: [35m2[39m,
+      },
+      [34;4mApp\Models\RiwayatPengecekan[39;24m {#7991
+        [34mid_form_alat[39m: [35m3[39m,
+        [34mid_pengguna[39m: [32m"[39m[32mGALA-660[39m[32m"[39m,
+        [34mcatatan[39m: [32m"[39m[32mAlarm berbunyi tanpa objek logam[39m[32m"[39m,
+        [34mstatus[39m: [32m"[39m[32mkurang_bagus[39m[32m"[39m,
+        [34mdicek_pada[39m: [32m"[39m[32m2026-11-08 16:54:04[39m[32m"[39m,
+        [34mid[39m: [35m3[39m,
+      },
+      [34;4mApp\Models\RiwayatPengecekan[39;24m {#7962
+        [34mid_form_alat[39m: [35m4[39m,
+        [34mid_pengguna[39m: [32m"[39m[32mFARA-610[39m[32m"[39m,
+        [34mcatatan[39m: [32m"[39m[32mSensor sering error saat uji objek[39m[32m"[39m,
+        [34mstatus[39m: [32m"[39m[32mkurang_bagus[39m[32m"[39m,
+        [34mdicek_pada[39m: [32m"[39m[32m2026-11-05 09:17:52[39m[32m"[39m,
+        [34mid[39m: [35m4[39m,
+      },
+      [34;4mApp\Models\RiwayatPengecekan[39;24m {#7971
+        [34mid_form_alat[39m: [35m5[39m,
+        [34mid_pengguna[39m: [32m"[39m[32mJIND-153[39m[32m"[39m,
+        [34mcatatan[39m: [32m"[39m[32mAlarm berbunyi tanpa objek logam[39m[32m"[39m,
+        [34mstatus[39m: [32m"[39m[32mkurang_bagus[39m[32m"[39m,
+        [34mdicek_pada[39m: [32m"[39m[32m2026-11-06 02:25:20[39m[32m"[39m,
+        [34mid[39m: [35m5[39m,
+      },
+    ],
+  }
