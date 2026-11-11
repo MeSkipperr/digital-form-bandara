@@ -17,6 +17,18 @@ class RiwayatPengecekan extends Model
     use HasFactory;
 
     /**
+     * Label and badge color for each value of the `status` enum.
+     *
+     * @var array<string, array{label: string, warna: string}>
+     */
+    public const DAFTAR_STATUS = [
+        'bagus' => ['label' => 'Berhasil', 'warna' => '#16A34A'],
+        'kurang_bagus' => ['label' => 'Gagal', 'warna' => '#DC2626'],
+        'tertunda' => ['label' => 'Menunggu', 'warna' => '#64748B'],
+        'terlewati' => ['label' => 'Dilewati', 'warna' => '#2563EB'],
+    ];
+
+    /**
      * The model's default values for attributes.
      *
      * @var array<string, mixed>

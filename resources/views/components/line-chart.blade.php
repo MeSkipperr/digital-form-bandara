@@ -56,10 +56,11 @@
 
     @if ($highlight !== null)
         @php($tip = $coordinates[$highlight])
+        @php($tipX = min(max($tip['x'], $plotLeft + 54), $plotLeft + $plotWidth + 16 - 54))
         <g>
-            <rect x="{{ $tip['x'] - 54 }}" y="{{ $tip['y'] - 54 }}" width="108" height="40" rx="6" fill="#12345A" />
-            <text x="{{ $tip['x'] }}" y="{{ $tip['y'] - 37 }}" text-anchor="middle" class="fill-sidebar-text text-[11px]">{{ $points[$highlight]['tooltip'] }}</text>
-            <text x="{{ $tip['x'] }}" y="{{ $tip['y'] - 21 }}" text-anchor="middle" class="fill-white text-[13px] font-bold">{{ $points[$highlight]['value'] }} form</text>
+            <rect x="{{ $tipX - 54 }}" y="{{ $tip['y'] - 54 }}" width="108" height="40" rx="6" fill="#12345A" />
+            <text x="{{ $tipX }}" y="{{ $tip['y'] - 37 }}" text-anchor="middle" class="fill-sidebar-text text-[11px]">{{ $points[$highlight]['tooltip'] }}</text>
+            <text x="{{ $tipX }}" y="{{ $tip['y'] - 21 }}" text-anchor="middle" class="fill-white text-[13px] font-bold">{{ $points[$highlight]['value'] }} form</text>
         </g>
     @endif
 </svg>
