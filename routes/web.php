@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AlatController;
+use App\Http\Controllers\Admin\PenggunaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -9,7 +10,9 @@ Route::get('/', function () {
 
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::view('/dasbor', 'admin.dasbor')->name('dasbor');
-    Route::view('/pengguna', 'admin.pengguna.index')->name('pengguna.index');
+    Route::get('/pengguna', [PenggunaController::class, 'index'])->name('pengguna.index');
+    Route::post('/pengguna', [PenggunaController::class, 'store'])->name('pengguna.store');
+    Route::put('/pengguna/{pengguna}', [PenggunaController::class, 'update'])->name('pengguna.update');
     Route::get('/alat', [AlatController::class, 'index'])->name('alat.index');
     Route::post('/alat', [AlatController::class, 'store'])->name('alat.store');
     Route::get('/alat/{alat}', [AlatController::class, 'show'])->name('alat.show');

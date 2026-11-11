@@ -19,6 +19,38 @@ class Pengguna extends Model
     use HasFactory;
 
     /**
+     * Label for each value of the `peran` enum.
+     *
+     * @var array<string, string>
+     */
+    public const DAFTAR_PERAN = [
+        'petugas' => 'Petugas',
+        'admin' => 'Admin',
+    ];
+
+    /**
+     * Initials shown in the avatar, taken from the first two words of the name.
+     */
+    public function inisial(): string
+    {
+        return collect(explode(' ', trim($this->nama)))
+            ->filter()
+            ->take(2)
+            ->map(fn (string $kata): string => mb_strtoupper(mb_substr($kata, 0, 1)))
+            ->implode('');
+    }
+
+    /**
+     * Avatar background color, stable per user.
+     */
+    public function warnaAvatar(): string
+    {
+        $warna = ['#12345A', '#1D4E89', '#19A7A0', '#475569', '#0F766E', '#334155'];
+
+        return $warna[crc32($this->id) % count($warna)];
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

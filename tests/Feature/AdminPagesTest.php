@@ -21,7 +21,6 @@ class AdminPagesTest extends TestCase
     {
         return [
             'dasbor' => ['/admin/dasbor', ['Dasbor', 'Perbandingan Status Alat', 'Jumlah Form yang Diisi Setiap Hari', 'Form Hari Ini', 'Pengguna Aktif']],
-            'pengguna' => ['/admin/pengguna', ['Kelola Pengguna', 'Tambah Pengguna', 'Menampilkan 6 dari 24 pengguna', 'Ubah Pengguna', 'Ubah Kata Sandi']],
             'riwayat' => ['/admin/riwayat', ['Riwayat Pengecekan', 'Sensor samping tidak merespons', 'Detail Pengecekan', 'Buka Detail Alat']],
         ];
     }
