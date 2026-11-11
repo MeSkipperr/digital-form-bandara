@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('riwayat_pengecekan', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_form_alat')->constrained('form_alat', indexName: 'fk_riwayat_form_alat');
-            $table->string('id_pengguna', 20);
+            $table->string('id_pengguna', 20)->nullable();
             $table->text('catatan')->nullable();
             $table->enum('status', ['bagus', 'kurang_bagus', 'tertunda', 'terlewati']);
             $table->timestamp('dicek_pada')->nullable();
