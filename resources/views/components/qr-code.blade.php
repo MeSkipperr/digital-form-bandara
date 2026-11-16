@@ -1,43 +1,35 @@
 {{--
-    Visual QR placeholder: three finder squares plus a pattern derived from $value.
-    It is NOT a scannable code. Swap it for a real QR generator (needs a package such as
-    bacon/bacon-qr-code, which has to be approved first) before printing labels.
+    Scannable QR code whose only content is $value (for alat: the alat ID), drawn black on white.
+    The SVG keeps the standard 4-module white quiet zone so printed labels and downloaded JPGs scan reliably.
+    Each row's dark modules are merged into horizontal runs so the whole code is a single <path>.
 --}}
 @props(['value', 'size' => 232])
 
 @php
-    $modules = 25;
-    $finderOrigins = [[0, 0], [$modules - 7, 0], [0, $modules - 7]];
+    $matrix = \BaconQrCode\Encoder\Encoder::encode((string) $value, \BaconQrCode\Common\ErrorCorrectionLevel::M())->getMatrix();
+    $quietZone = 4;
+    $modules = $matrix->getWidth() + $quietZone * 2;
+    $darkModulesPath = '';
 
-    $isFinderArea = function (int $x, int $y) use ($finderOrigins): bool {
-        foreach ($finderOrigins as [$originX, $originY]) {
-            if ($x >= $originX - 1 && $x <= $originX + 7 && $y >= $originY - 1 && $y <= $originY + 7) {
-                return true;
+    for ($y = 0; $y < $matrix->getHeight(); $y++) {
+        for ($x = 0; $x < $matrix->getWidth(); $x++) {
+            if ($matrix->get($x, $y) !== 1) {
+                continue;
             }
-        }
 
-        return false;
-    };
+            $run = 1;
 
-    $cells = [];
-
-    for ($y = 0; $y < $modules; $y++) {
-        for ($x = 0; $x < $modules; $x++) {
-            if (! $isFinderArea($x, $y) && crc32($value.':'.$x.':'.$y) % 2 === 0) {
-                $cells[] = [$x, $y];
+            while ($x + $run < $matrix->getWidth() && $matrix->get($x + $run, $y) === 1) {
+                $run++;
             }
+
+            $darkModulesPath .= 'M'.($x + $quietZone).' '.($y + $quietZone).'h'.$run.'v1h-'.$run.'z';
+            $x += $run - 1;
         }
     }
 @endphp
 
-<svg {{ $attributes }} width="{{ $size }}" height="{{ $size }}" viewBox="0 0 {{ $modules }} {{ $modules }}" shape-rendering="crispEdges" role="img" aria-label="Kode QR {{ $value }}">
-    <g fill="#12345A">
-        @foreach ($finderOrigins as [$originX, $originY])
-            <path d="M{{ $originX }} {{ $originY }}h7v7h-7z M{{ $originX + 1 }} {{ $originY + 1 }}v5h5v-5z" fill-rule="evenodd" />
-            <rect x="{{ $originX + 2 }}" y="{{ $originY + 2 }}" width="3" height="3" />
-        @endforeach
-        @foreach ($cells as [$x, $y])
-            <rect x="{{ $x }}" y="{{ $y }}" width="1" height="1" />
-        @endforeach
-    </g>
+<svg {{ $attributes }} xmlns="http://www.w3.org/2000/svg" width="{{ $size }}" height="{{ $size }}" viewBox="0 0 {{ $modules }} {{ $modules }}" shape-rendering="crispEdges" role="img" aria-label="Kode QR {{ $value }}">
+    <rect width="{{ $modules }}" height="{{ $modules }}" fill="#FFFFFF" />
+    <path d="{{ $darkModulesPath }}" fill="#000000" />
 </svg>

@@ -82,6 +82,7 @@ class AlatControllerTest extends TestCase
             ->assertOk()
             ->assertSeeText(['Inspeksi Alat / Alat / Detail', 'Detail Alat', 'Xray Pro Max', 'Gudang Belakang', 'Kategori Alat', 'X-Ray', 'Baik'])
             ->assertSeeText(['Ubah Informasi', 'Unduh / Cetak QR', 'Form Pemeriksaan', 'Form untuk kategori X-Ray', 'Lihat Semua Form', 'Form Kebersihan Lensa'])
+            ->assertSee(['id="qr-alat"', 'aria-label="Kode QR XRAY-01"', 'data-unduh-qr="qr-alat" data-nama-file="qr-XRAY-01"'], false)
             ->assertSee(route('admin.alat.form.task', ['XRAY-01', $formAlat]), false);
 
         $this->get('/admin/alat/XRAY-99')->assertNotFound();

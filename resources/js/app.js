@@ -14,7 +14,7 @@
  *   kategori list on the page so open alat forms keep their input. The page reloads once all dialogs are closed.
  * - [data-unggah-gambar] image fields accept a picked or dropped PNG / JPG, preview it, and let "Hapus gambar" clear it.
  *   Closing the dialog restores the original image.
- * - [data-unduh-qr="svg-id"] downloads that QR <svg> as an .svg file.
+ * - [data-unduh-qr="svg-id"] downloads that QR <svg> as a black-and-white .jpg file.
  * - [data-tabs] toggles [data-tab-panel] elements from radio inputs.
  * - [data-line-chart] shows the tooltip of the point nearest the pointer (or picked with the arrow keys),
  *   and falls back to its data-sorot point when the pointer leaves.
@@ -458,13 +458,38 @@ document.querySelectorAll('[data-unggah-gambar]').forEach((field) => {
 
 document.querySelectorAll('[data-unduh-qr]').forEach((button) => {
     button.addEventListener('click', () => {
-        const svg = document.getElementById(button.dataset.unduhQr);
-        const link = document.createElement('a');
+        const svg = document.getElementById(button.dataset.unduhQr).cloneNode(true);
+        const modules = svg.viewBox.baseVal.width;
+        // Whole pixels per module keep every module edge sharp; ~1024px is plenty for printed labels.
+        const size = modules * Math.ceil(1024 / modules);
+        const canvas = document.createElement('canvas');
+        const image = new Image();
 
-        link.href = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
-        link.download = `${button.dataset.namaFile ?? 'qr'}.svg`;
-        link.click();
-        URL.revokeObjectURL(link.href);
+        svg.setAttribute('width', size);
+        svg.setAttribute('height', size);
+        canvas.width = size;
+        canvas.height = size;
+
+        image.addEventListener('load', () => {
+            const context = canvas.getContext('2d');
+
+            // JPG has no transparency, so paint white first in case any pixel is left uncovered.
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, size, size);
+            context.imageSmoothingEnabled = false;
+            context.drawImage(image, 0, 0, size, size);
+
+            canvas.toBlob((blob) => {
+                const link = document.createElement('a');
+
+                link.href = URL.createObjectURL(blob);
+                link.download = `${button.dataset.namaFile ?? 'qr'}.jpg`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }, 'image/jpeg', 1);
+        });
+
+        image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg))}`;
     });
 });
 
