@@ -6,10 +6,16 @@
  * - Clicking a dialog's backdrop closes it.
  * - Open <details data-dropdown> menus close on outside click or Escape.
  * - form[data-auto-submit] submits itself when one of its <select> filters changes.
- * - form[data-tambah-kategori] adds the new kategori to every [data-kategori-options] list and selects it
- *   in the dropdown whose [data-kategori-asal] button opened the popup.
  * - [data-select-badge] mirrors the checked radio option into the closed select's summary.
+ * - [data-kategori-daftar] lists add, rename and delete kategori with fetch, then mirror the change into every
+ *   kategori list on the page so open alat forms keep their input. The page reloads once all dialogs are closed.
+ * - [data-unggah-gambar] image fields accept a picked or dropped PNG / JPG, preview it, and let "Hapus gambar" clear it.
+ *   Closing the dialog restores the original image.
+ * - [data-unduh-qr="svg-id"] downloads that QR <svg> as an .svg file.
  * - [data-tabs] toggles [data-tab-panel] elements from radio inputs.
+ * - [data-line-chart] shows the tooltip of the point nearest the pointer (or picked with the arrow keys),
+ *   and falls back to its data-sorot point when the pointer leaves.
+ * - [data-donut-chart] highlights the hovered segment (or linked [data-donut-legend] row) and shows its value in the centre.
  */
 
 document.addEventListener('click', (event) => {
@@ -56,15 +62,12 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.querySelectorAll('[data-select-badge]').forEach((select) => {
-    const display = select.querySelector('[data-select-display]');
-
     select.addEventListener('change', (event) => {
-        const option = event.target.closest('label')?.querySelector('[data-option-badge]');
-
-        if (option) {
-            display.replaceChildren(option.cloneNode(true));
+        if (event.target.type !== 'radio') {
+            return;
         }
 
+        syncSelectDisplays();
         select.removeAttribute('open');
     });
 });
@@ -90,43 +93,415 @@ document.querySelectorAll('form[data-auto-submit]').forEach((form) => {
     });
 });
 
-let daftarKategoriAsal = null;
+/**
+ * Re-renders every [data-select-display] from its checked radio, or the placeholder when none is checked.
+ */
+function syncSelectDisplays() {
+    document.querySelectorAll('[data-select-badge]').forEach((select) => {
+        const display = select.querySelector('[data-select-display]');
+        const badge = select.querySelector('input[type="radio"]:checked')?.closest('label')?.querySelector('[data-option-badge]');
 
-document.addEventListener('click', (event) => {
-    const asal = event.target.closest('[data-kategori-asal]');
+        if (badge) {
+            display.replaceChildren(badge.cloneNode(true));
 
-    if (asal) {
-        daftarKategoriAsal = asal.closest('details')?.querySelector('[data-kategori-options]') ?? null;
-    }
-});
-
-document.querySelectorAll('form[data-tambah-kategori]').forEach((form) => {
-    const template = form.closest('dialog').querySelector('template[data-template-opsi-kategori]');
-
-    form.addEventListener('submit', () => {
-        const nama = form.elements.nama.value.trim();
-
-        if (nama === '') {
             return;
         }
 
-        const idSementara = `baru-${Date.now()}`;
+        const placeholder = document.createElement('span');
+        placeholder.className = 'text-muted';
+        placeholder.textContent = display.dataset.placeholder ?? '';
+        display.replaceChildren(placeholder);
+    });
+}
 
-        document.querySelectorAll('[data-kategori-options]').forEach((daftar) => {
-            const opsi = template.content.firstElementChild.cloneNode(true);
-            const input = opsi.querySelector('input');
+const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+let kategoriChanged = false;
 
-            input.value = idSementara;
-            opsi.querySelector('[data-option-badge]').textContent = nama;
-            daftar.append(opsi);
+const sendKategori = async (url, method, data) => {
+    const response = await fetch(url, {
+        method,
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+        body: JSON.stringify(data),
+    });
+    const body = await response.json().catch(() => ({}));
 
-            if (daftar === daftarKategoriAsal) {
-                input.checked = true;
-                input.dispatchEvent(new Event('change', { bubbles: true }));
+    if (!response.ok) {
+        throw new Error(Object.values(body.errors ?? {})[0]?.[0] ?? 'Terjadi kesalahan. Coba lagi.');
+    }
+
+    return body;
+};
+
+const showMode = (option, mode) => {
+    option.querySelectorAll(':scope > [data-mode]').forEach((panel) => {
+        panel.hidden = panel.dataset.mode !== mode;
+    });
+};
+
+const showError = (container, message) => {
+    const error = container.querySelector('[data-kategori-galat]');
+    error.textContent = message;
+    error.hidden = message === '';
+};
+
+const optionsWithId = (id) => document.querySelectorAll(`[data-kategori-opsi][data-kategori-id="${id}"]`);
+
+const usageText = (option) => {
+    const parts = [];
+
+    if (Number(option.dataset.jumlahAlat) > 0) {
+        parts.push(`${option.dataset.jumlahAlat} alat`);
+    }
+
+    if (Number(option.dataset.jumlahForm) > 0) {
+        parts.push(`${option.dataset.jumlahForm} form`);
+    }
+
+    return parts.join(' dan ');
+};
+
+const openDeleteConfirmation = (option) => {
+    const name = option.querySelector('[data-kategori-nama]').textContent.trim();
+    const usage = usageText(option);
+    const target = option.querySelector('[data-kategori-tujuan]');
+    const confirm = option.querySelector('[data-kategori-konfirmasi-hapus]');
+    const others = [...option.closest('[data-kategori-options]').querySelectorAll(':scope > [data-kategori-opsi]')].filter(
+        (other) => other !== option,
+    );
+
+    target.replaceChildren(
+        ...others.map((other) => new Option(other.querySelector('[data-kategori-nama]').textContent.trim(), other.dataset.kategoriId)),
+    );
+
+    option.querySelector('[data-kategori-pindah]').hidden = usage === '' || others.length === 0;
+    confirm.disabled = usage !== '' && others.length === 0;
+    option.querySelector('[data-kategori-pesan]').textContent =
+        usage === ''
+            ? `Hapus ${name}? Kategori ini belum dipakai alat atau form.`
+            : others.length === 0
+              ? `${name} masih dipakai ${usage}. Tambahkan kategori lain dulu untuk memindahkannya.`
+              : `Hapus ${name}? ${usage} masih memakai kategori ini.`;
+
+    showError(option, '');
+    showMode(option, 'hapus');
+};
+
+const addKategoriToLists = (kategori, sourceList) => {
+    document.querySelectorAll('[data-kategori-daftar]').forEach((list) => {
+        const option = list.querySelector('template[data-kategori-template]').content.firstElementChild.cloneNode(true);
+        const radio = option.querySelector('input[type="radio"]');
+
+        option.dataset.kategoriId = kategori.id;
+        option.querySelector('[data-kategori-nama]').textContent = kategori.nama;
+
+        if (radio) {
+            radio.value = kategori.id;
+            radio.checked = list === sourceList;
+        }
+
+        list.querySelector('[data-kategori-options]').append(option);
+    });
+};
+
+const removeKategoriFromLists = (id, targetId) => {
+    optionsWithId(id).forEach((option) => {
+        const target = option.parentElement.querySelector(`:scope > [data-kategori-opsi][data-kategori-id="${targetId}"]`);
+        const radio = option.querySelector('input[type="radio"]');
+
+        if (target) {
+            target.dataset.jumlahAlat = Number(target.dataset.jumlahAlat) + Number(option.dataset.jumlahAlat);
+            target.dataset.jumlahForm = Number(target.dataset.jumlahForm) + Number(option.dataset.jumlahForm);
+
+            if (radio?.checked) {
+                target.querySelector('input[type="radio"]').checked = true;
             }
+        }
+
+        option.remove();
+    });
+};
+
+const saveKategori = async (button) => {
+    const list = button.closest('[data-kategori-daftar]');
+    const option = button.closest('[data-kategori-opsi]');
+    const container = option ?? list.querySelector('[data-kategori-baru]');
+    const name = container.querySelector('[data-kategori-input]').value.trim();
+
+    if (name === '') {
+        showError(container, 'Nama kategori wajib diisi.');
+
+        return;
+    }
+
+    if (option) {
+        const kategori = await sendKategori(`${list.dataset.url}/${option.dataset.kategoriId}`, 'PUT', { nama: name });
+
+        optionsWithId(kategori.id).forEach((same) => {
+            same.querySelector('[data-kategori-nama]').textContent = kategori.nama;
+            showMode(same, 'lihat');
+        });
+    } else {
+        addKategoriToLists(await sendKategori(list.dataset.url, 'POST', { nama: name }), list);
+        container.hidden = true;
+        container.querySelector('[data-kategori-input]').value = '';
+    }
+
+    syncSelectDisplays();
+};
+
+const deleteKategori = async (button) => {
+    const list = button.closest('[data-kategori-daftar]');
+    const option = button.closest('[data-kategori-opsi]');
+    const targetId = option.querySelector('[data-kategori-pindah]').hidden ? null : option.querySelector('[data-kategori-tujuan]').value;
+
+    await sendKategori(`${list.dataset.url}/${option.dataset.kategoriId}`, 'DELETE', { pindah_ke: targetId });
+
+    removeKategoriFromLists(option.dataset.kategoriId, targetId);
+    syncSelectDisplays();
+};
+
+const kategoriActions = {
+    kategoriTambah: (button) => {
+        const container = button.closest('[data-kategori-daftar]').querySelector('[data-kategori-baru]');
+        container.hidden = false;
+        showError(container, '');
+        container.querySelector('[data-kategori-input]').focus();
+    },
+    kategoriUbah: (button) => {
+        const option = button.closest('[data-kategori-opsi]');
+        const input = option.querySelector('[data-kategori-input]');
+
+        input.value = option.querySelector('[data-kategori-nama]').textContent.trim();
+        showError(option, '');
+        showMode(option, 'ubah');
+        input.select();
+    },
+    kategoriBatal: (button) => {
+        const option = button.closest('[data-kategori-opsi]');
+
+        if (option) {
+            showMode(option, 'lihat');
+
+            return;
+        }
+
+        const container = button.closest('[data-kategori-baru]');
+        container.hidden = true;
+        container.querySelector('[data-kategori-input]').value = '';
+    },
+    kategoriHapus: (button) => openDeleteConfirmation(button.closest('[data-kategori-opsi]')),
+    kategoriSimpan: saveKategori,
+    kategoriKonfirmasiHapus: deleteKategori,
+};
+
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-kategori-daftar] button');
+    const action = Object.keys(kategoriActions).find((key) => button?.dataset[key] !== undefined);
+
+    if (!action) {
+        return;
+    }
+
+    const container = button.closest('[data-kategori-opsi]') ?? button.closest('[data-kategori-baru]');
+    button.disabled = true;
+
+    try {
+        await kategoriActions[action](button);
+
+        if (action === 'kategoriSimpan' || action === 'kategoriKonfirmasiHapus') {
+            kategoriChanged = true;
+        }
+    } catch (error) {
+        showError(container, error.message);
+    } finally {
+        button.disabled = false;
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && event.target.matches('[data-kategori-input]')) {
+        event.preventDefault();
+        event.target.parentElement.querySelector('[data-kategori-simpan]').click();
+    }
+});
+
+document.querySelectorAll('dialog').forEach((dialog) => {
+    dialog.addEventListener('close', () => {
+        if (kategoriChanged && !document.querySelector('dialog[open]')) {
+            window.location.reload();
+        }
+    });
+});
+
+const UKURAN_GAMBAR_MAKSIMAL = 5 * 1024 * 1024;
+
+document.querySelectorAll('[data-unggah-gambar]').forEach((field) => {
+    const input = field.querySelector('[data-unggah-input]');
+    const removeFlag = field.querySelector('[data-unggah-hapus]');
+    const dropZone = field.querySelector('[data-unggah-kosong]');
+    const preview = field.querySelector('[data-unggah-pratinjau]');
+    const previewImage = field.querySelector('[data-unggah-gambar-pratinjau]');
+    const error = field.querySelector('[data-unggah-galat]');
+    const originalUrl = field.dataset.urlAsli ?? '';
+
+    const showImage = (url) => {
+        previewImage.src = url;
+        preview.hidden = url === '';
+        dropZone.hidden = url !== '';
+    };
+
+    const showUploadError = (message) => {
+        error.textContent = message;
+        error.hidden = message === '';
+    };
+
+    const currentUrl = () => (removeFlag.value === '1' ? '' : originalUrl);
+
+    const choose = (file) => {
+        if (!file) {
+            return;
+        }
+
+        const message = !['image/png', 'image/jpeg'].includes(file.type)
+            ? 'Gambar harus berupa file PNG atau JPG.'
+            : file.size > UKURAN_GAMBAR_MAKSIMAL
+              ? 'Ukuran gambar maksimal 5 MB.'
+              : '';
+
+        showUploadError(message);
+
+        if (message !== '') {
+            input.value = '';
+            showImage(currentUrl());
+
+            return;
+        }
+
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+        showImage(URL.createObjectURL(file));
+    };
+
+    input.addEventListener('change', () => choose(input.files[0]));
+
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        dropZone.dataset.seret = '';
+    });
+
+    dropZone.addEventListener('dragleave', () => delete dropZone.dataset.seret);
+
+    dropZone.addEventListener('drop', (event) => {
+        event.preventDefault();
+        delete dropZone.dataset.seret;
+        choose(event.dataTransfer.files[0]);
+    });
+
+    field.querySelector('[data-unggah-hapus-tombol]').addEventListener('click', () => {
+        input.value = '';
+        removeFlag.value = originalUrl === '' ? '0' : '1';
+        showUploadError('');
+        showImage('');
+    });
+
+    field.closest('dialog')?.addEventListener('close', () => {
+        input.value = '';
+        removeFlag.value = '0';
+        showUploadError('');
+        showImage(originalUrl);
+    });
+});
+
+document.querySelectorAll('[data-unduh-qr]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const svg = document.getElementById(button.dataset.unduhQr);
+        const link = document.createElement('a');
+
+        link.href = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
+        link.download = `${button.dataset.namaFile ?? 'qr'}.svg`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    });
+});
+
+document.querySelectorAll('[data-line-chart]').forEach((chart) => {
+    const dots = [...chart.querySelectorAll('circle[data-chart-index]')];
+    const defaultIndex = chart.dataset.sorot === '' ? null : Number(chart.dataset.sorot);
+    const viewBoxWidth = chart.viewBox.baseVal.width;
+    let activeIndex = defaultIndex;
+
+    const activate = (index) => {
+        activeIndex = index;
+        chart.querySelectorAll('[data-chart-index]').forEach((element) => {
+            element.toggleAttribute('data-aktif', Number(element.dataset.chartIndex) === index);
+        });
+    };
+
+    const nearestIndex = (clientX) => {
+        const box = chart.getBoundingClientRect();
+        const x = ((clientX - box.left) / box.width) * viewBoxWidth;
+
+        return dots.reduce(
+            (nearest, dot, index) => (Math.abs(Number(dot.dataset.x) - x) < Math.abs(Number(dots[nearest].dataset.x) - x) ? index : nearest),
+            0,
+        );
+    };
+
+    chart.addEventListener('pointermove', (event) => {
+        const index = nearestIndex(event.clientX);
+
+        if (index !== activeIndex) {
+            activate(index);
+        }
+    });
+
+    chart.addEventListener('pointerleave', () => activate(defaultIndex));
+    chart.addEventListener('blur', () => activate(defaultIndex));
+
+    chart.addEventListener('keydown', (event) => {
+        const steps = { ArrowLeft: -1, ArrowRight: 1 };
+
+        if (!(event.key in steps) || dots.length === 0) {
+            return;
+        }
+
+        event.preventDefault();
+        const start = activeIndex ?? (steps[event.key] > 0 ? -1 : dots.length);
+        activate(Math.min(Math.max(start + steps[event.key], 0), dots.length - 1));
+    });
+});
+
+document.querySelectorAll('[data-donut-chart]').forEach((chart) => {
+    const legend = chart.id ? document.querySelector(`[data-donut-legend="${chart.id}"]`) : null;
+    const parts = [...chart.querySelectorAll('[data-donut-segment]'), ...(legend?.querySelectorAll('[data-donut-segment]') ?? [])];
+    const value = chart.querySelector('[data-donut-value]');
+    const caption = chart.querySelector('[data-donut-caption]');
+    const total = Number(chart.dataset.total);
+
+    const activate = (source) => {
+        const index = source?.dataset.donutSegment;
+
+        parts.forEach((part) => {
+            const isActive = index !== undefined && part.dataset.donutSegment === index;
+            part.toggleAttribute('data-aktif', isActive);
+            part.toggleAttribute('data-redup', index !== undefined && !isActive);
         });
 
-        daftarKategoriAsal = null;
-        form.reset();
+        if (index === undefined) {
+            value.textContent = chart.dataset.total;
+            caption.textContent = chart.dataset.caption;
+
+            return;
+        }
+
+        const percentage = total === 0 ? 0 : Math.round((Number(source.dataset.value) / total) * 100);
+        value.textContent = source.dataset.value;
+        caption.textContent = `${source.dataset.label} · ${percentage}%`;
+    };
+
+    parts.forEach((part) => {
+        part.addEventListener('pointerenter', () => activate(part));
+        part.addEventListener('pointerleave', () => activate(null));
     });
 });

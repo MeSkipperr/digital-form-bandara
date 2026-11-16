@@ -33,6 +33,18 @@
             <path d="M8 11h.01" />
             <path d="M8 16h.01" />
             @break
+        @case('form')
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+            <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+            <path d="M10 9H8" />
+            <path d="M16 13H8" />
+            <path d="M16 17H8" />
+            @break
+        @case('keluar')
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <path d="m16 17 5-5-5-5" />
+            <path d="M21 12H9" />
+            @break
         @case('kalender')
             <path d="M8 2v4" />
             <path d="M16 2v4" />
@@ -56,6 +68,9 @@
             @break
         @case('chevron-kiri')
             <path d="m15 18-6-6 6-6" />
+            @break
+        @case('chevron-kanan')
+            <path d="m9 18 6-6-6-6" />
             @break
         @case('tutup')
             <path d="M18 6 6 18" />
@@ -84,9 +99,28 @@
             <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
             <circle cx="12" cy="20" r="1.5" fill="currentColor" stroke="none" />
             @break
+        @case('label')
+            <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+            <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+            @break
+        @case('unduh')
+            <path d="M12 15V3" />
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <path d="m7 10 5 5 5-5" />
+            @break
         @case('lihat')
             <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
             <circle cx="12" cy="12" r="3" />
+            @break
+        @case('unggah')
+            <path d="M12 3v12" />
+            <path d="m17 8-5-5-5 5" />
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            @break
+        @case('peringatan')
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
             @break
     @endswitch
 </svg>

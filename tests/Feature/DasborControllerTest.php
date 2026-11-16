@@ -24,7 +24,14 @@ class DasborControllerTest extends TestCase
     {
         $this->get(route('admin.dasbor'))
             ->assertOk()
-            ->assertSeeText(['Dasbor', 'Perbandingan Status Alat', 'Jumlah Form yang Diisi Setiap Hari', 'Form Hari Ini', 'Pengguna Aktif', 'Tidak ada pengguna yang sedang daring.']);
+            ->assertSeeText(['Dasbor', 'Perbandingan Status Alat', 'Jumlah Form yang Diisi Setiap Hari', 'Form Hari Ini', 'Pengguna Aktif', 'Tidak ada pengguna yang sedang aktif.']);
+    }
+
+    public function test_sidebar_shows_the_design_menu(): void
+    {
+        $this->get(route('admin.dasbor'))
+            ->assertSeeTextInOrder(['Dasbor', 'Alat', 'Form', 'Pengguna', 'Riwayat', 'Admin Utama', '@admin'])
+            ->assertSee('aria-label="Keluar"', false);
     }
 
     public function test_status_alat_counts_come_from_the_database(): void
@@ -35,7 +42,7 @@ class DasborControllerTest extends TestCase
         $this->get(route('admin.dasbor'))
             ->assertViewHas('statusAlat', [
                 ['label' => 'Perlu Perbaikan', 'value' => 2, 'color' => '#D97706'],
-                ['label' => 'Bagus', 'value' => 3, 'color' => '#16A34A'],
+                ['label' => 'Baik', 'value' => 3, 'color' => '#16A34A'],
             ]);
     }
 
@@ -48,10 +55,20 @@ class DasborControllerTest extends TestCase
 
         $nilai = collect($this->get(route('admin.dasbor'))->viewData('formHariIni'))->pluck('value', 'label');
 
-        $this->assertSame(4, $nilai['Menunggu']);
-        $this->assertSame(2, $nilai['Baik']);
-        $this->assertSame(1, $nilai['Buruk']);
-        $this->assertSame(0, $nilai['Dilewati']);
+        $this->assertSame(['Tertunda' => 4, 'Bagus' => 2, 'Kurang Bagus' => 1], $nilai->all());
+    }
+
+    public function test_charts_render_hover_details_for_every_point_and_segment(): void
+    {
+        Alat::factory()->count(3)->bagus()->create();
+        Alat::factory()->perluPerbaikan()->create();
+
+        $this->get(route('admin.dasbor'))
+            ->assertSee('data-line-chart', false)
+            ->assertSee('data-donut-legend="grafik-status-alat"', false)
+            ->assertSee('<title>Baik: 3 (75%)</title>', false)
+            ->assertSeeText(now()->locale('id')->isoFormat('dddd, D MMM'))
+            ->assertSeeText(now()->subDays(6)->locale('id')->isoFormat('dddd, D MMM'));
     }
 
     public function test_form_per_hari_covers_the_selected_period(): void
@@ -82,7 +99,7 @@ class DasborControllerTest extends TestCase
         SesiPengguna::factory()->for($nonaktif, 'pengguna')->create(['aktif_sampai' => now()->addHour()]);
 
         $this->get(route('admin.dasbor'))
-            ->assertSeeText(['Yoga Pratama', '@yoga001', 'Daring'])
+            ->assertSeeText(['Yoga Pratama', '@yoga001', 'Aktif'])
             ->assertDontSeeText(['Sesi Kedaluwarsa', 'Pengguna Nonaktif', 'Tanpa Sesi']);
     }
 }

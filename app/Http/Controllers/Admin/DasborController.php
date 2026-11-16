@@ -31,24 +31,28 @@ class DasborController extends Controller
     }
 
     /**
+     * Labels follow the dashboard design ("Baik" instead of the badge label "Bagus").
+     *
      * @return list<array{label: string, value: int, color: string}>
      */
     protected function statusAlat(): array
     {
         $jumlah = Alat::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+        $label = ['perlu_perbaikan' => 'Perlu Perbaikan', 'bagus' => 'Baik'];
 
-        return collect(['perlu_perbaikan', 'bagus'])
-            ->map(fn (string $status): array => [
-                'label' => Alat::DAFTAR_STATUS[$status]['label'],
+        return collect($label)
+            ->map(fn (string $teks, string $status): array => [
+                'label' => $teks,
                 'value' => (int) ($jumlah[$status] ?? 0),
                 'color' => Alat::DAFTAR_STATUS[$status]['warna'],
             ])
+            ->values()
             ->all();
     }
 
     /**
-     * Pending inspections are not dated, so "Menunggu" counts every pending row;
-     * the other statuses count inspections done today.
+     * Pending inspections are not dated, so "Tertunda" counts every pending row;
+     * "Bagus" and "Kurang Bagus" count inspections done today.
      *
      * @return list<array{label: string, value: int, color: string}>
      */
@@ -60,21 +64,23 @@ class DasborController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
 
-        $jumlah = [
-            'tertunda' => RiwayatPengecekan::query()->where('status', 'tertunda')->count(),
-            'bagus' => $hariIni['bagus'] ?? 0,
-            'kurang_bagus' => $hariIni['kurang_bagus'] ?? 0,
-            'terlewati' => $hariIni['terlewati'] ?? 0,
+        return [
+            [
+                'label' => 'Tertunda',
+                'value' => RiwayatPengecekan::query()->where('status', 'tertunda')->count(),
+                'color' => '#64748B',
+            ],
+            [
+                'label' => 'Bagus',
+                'value' => (int) ($hariIni['bagus'] ?? 0),
+                'color' => '#16A34A',
+            ],
+            [
+                'label' => 'Kurang Bagus',
+                'value' => (int) ($hariIni['kurang_bagus'] ?? 0),
+                'color' => '#D97706',
+            ],
         ];
-
-        return collect($jumlah)
-            ->map(fn (int $total, string $status): array => [
-                'label' => ['bagus' => 'Baik', 'kurang_bagus' => 'Buruk'][$status] ?? RiwayatPengecekan::DAFTAR_STATUS[$status]['label'],
-                'value' => $total,
-                'color' => RiwayatPengecekan::DAFTAR_STATUS[$status]['warna'],
-            ])
-            ->values()
-            ->all();
     }
 
     /**

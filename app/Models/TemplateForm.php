@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 #[Table(name: 'template_form', timestamps: false)]
 #[Fillable(['id_kategori_alat', 'path_gambar', 'nama'])]
@@ -16,6 +17,20 @@ class TemplateForm extends Model
 {
     /** @use HasFactory<TemplateFormFactory> */
     use HasFactory;
+
+    /**
+     * Public URL of the form image, or null when it is not set or missing from the public disk.
+     */
+    public function urlGambar(): ?string
+    {
+        $gambar = ltrim((string) $this->path_gambar, '/');
+
+        if ($gambar === '' || ! Storage::disk('public')->exists($gambar)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($gambar);
+    }
 
     /**
      * @return BelongsTo<KategoriAlat, $this>

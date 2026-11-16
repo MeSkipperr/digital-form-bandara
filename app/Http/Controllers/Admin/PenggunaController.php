@@ -24,7 +24,7 @@ class PenggunaController extends Controller
                 });
             })
             ->orderBy('nama')
-            ->paginate(6, pageName: 'halaman')
+            ->paginate(self::JUMLAH_PER_HALAMAN, pageName: 'halaman')
             ->withQueryString();
 
         return view('admin.pengguna.index', [

@@ -1,73 +1,92 @@
 @php
-    $idAlat = $alat->id;
     $status = $daftarStatus[$alat->status];
+    $namaKategori = $alat->kategoriAlat->nama;
 @endphp
 
-<x-layouts.admin title="Detail Alat" active="alat">
+<x-layouts.admin title="Detail Alat" active="alat" breadcrumb="Inspeksi Alat / Alat / Detail">
     <x-back-button :href="route('admin.alat.index')" />
 
-    <div class="mt-5 grid grid-cols-[360fr_752fr] gap-6">
-        <x-card class="flex flex-col items-center px-6 pt-8 pb-7">
-            <x-qr-code :value="$idAlat" />
-            <p class="mt-8 font-mono text-2xl font-bold text-ink">{{ $idAlat }}</p>
-            <p class="mt-1.5 text-xs text-muted">Pindai untuk membuka form pengecekan</p>
-            <x-button class="mt-7 h-11 w-full">Unduh / Cetak QR</x-button>
+    @if (session('status'))
+        <p class="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success" role="status">{{ session('status') }}</p>
+    @endif
+
+    <div class="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
+        <x-card class="px-6 pt-6 pb-6">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <h2 class="text-2xl leading-8 font-bold text-primary-dark">{{ $alat->model ?? $alat->id }}</h2>
+                    <p class="mt-1 font-mono text-sm text-muted">{{ $alat->id }}</p>
+                    @if ($alat->lokasi)
+                        <p class="mt-2 flex items-center gap-1.5 text-sm text-body">
+                            <x-icon name="lokasi" class="size-4 text-muted" />
+                            {{ $alat->lokasi }}
+                        </p>
+                    @endif
+                </div>
+                <x-badge :color="$status['warna']" :label="$status['label']" class="mt-1" />
+            </div>
+
+            <div class="mt-5 flex items-center gap-3 border-y border-line-soft py-4">
+                <x-kategori-ikon :nama="$namaKategori" class="size-11" />
+                <div>
+                    <p class="text-xs text-muted">Kategori Alat</p>
+                    <p class="text-base font-bold text-ink">{{ $namaKategori }}</p>
+                </div>
+            </div>
+
+            <dl class="mt-5 grid grid-cols-2 gap-x-8 gap-y-5">
+                <div>
+                    <dt class="text-xs text-muted">ID Alat</dt>
+                    <dd class="mt-1 font-mono text-sm font-bold text-ink">{{ $alat->id }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-muted">Model</dt>
+                    <dd class="mt-1 text-sm font-bold text-ink">{{ $alat->model ?? '-' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-muted">Status</dt>
+                    <dd class="mt-1"><x-badge :color="$status['warna']" :label="$status['label']" /></dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-muted">Lokasi</dt>
+                    <dd class="mt-1 text-sm font-bold text-ink">{{ $alat->lokasi ?? '-' }}</dd>
+                </div>
+            </dl>
+
+            <x-button variant="secondary" class="mt-6 w-48 font-bold" data-modal-open="modal-ubah-alat">
+                <x-icon name="pensil" class="size-4" />
+                Ubah Informasi
+            </x-button>
         </x-card>
 
-        <x-card class="px-8 pt-5.5 pb-8">
-            <div class="flex items-center justify-between border-b border-line-soft pb-6">
-                <h2 class="text-xl font-bold text-ink">Informasi Alat</h2>
-                <x-button variant="secondary" class="h-9 w-20" data-modal-open="modal-ubah-alat">Ubah</x-button>
-            </div>
-            <dl class="divide-y divide-line-soft">
-                @foreach ([
-                    'Model' => $alat['model'],
-                    'ID Alat' => $idAlat,
-                    'Kategori' => $alat->kategoriAlat->nama,
-                    'Lokasi' => $alat['lokasi'],
-                    'Status' => null,
-                    'Deskripsi' => $alat['deskripsi'],
-                    'Dibuat pada' => $alat->dibuat_pada?->format('d M Y, H:i'),
-                ] as $label => $nilai)
-                    <div class="flex items-start py-4.5">
-                        <dt class="w-42 shrink-0 text-[13px] text-muted">{{ $label }}</dt>
-                        <dd @class(['text-sm leading-[22px] whitespace-pre-line text-ink', 'font-mono' => $label === 'ID Alat'])>
-                            @if ($label === 'Status')
-                                <x-badge :color="$status['warna']" :label="$status['label']" />
-                            @else
-                                {{ $nilai }}
-                            @endif
-                        </dd>
-                    </div>
-                @endforeach
-            </dl>
+        <x-card class="flex flex-col items-center px-6 pt-7 pb-6">
+            <x-qr-code id="qr-alat" :value="$alat->id" :size="200" />
+            <p class="mt-6 font-mono text-2xl font-bold text-ink">{{ $alat->id }}</p>
+            <x-button class="mt-auto h-11 w-full" data-unduh-qr="qr-alat" data-nama-file="qr-{{ $alat->id }}">
+                <x-icon name="unduh" class="size-4" />
+                Unduh / Cetak QR
+            </x-button>
         </x-card>
     </div>
 
-    <x-card class="mt-6 px-6 pt-5 pb-6">
-        <div class="flex items-start justify-between">
-            <div class="pt-2">
-                <h2 class="text-base font-bold text-ink">Form Pengecekan</h2>
-                <p class="mt-1.5 text-xs text-muted">{{ count($daftarForm) }} form terpasang pada alat ini</p>
+    <x-card class="mt-5 px-6 pt-5 pb-6">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <h2 class="text-base font-bold text-ink">Form Pemeriksaan</h2>
+                <p class="mt-1 text-xs text-muted">Form untuk kategori {{ $namaKategori }}</p>
             </div>
-            <x-icon-button :href="route('admin.alat.form.index', $idAlat)" aria-label="Kelola form" />
+            <x-button :href="route('admin.alat.form.index', $alat)" class="w-45">
+                <x-icon name="form" class="size-4" />
+                Lihat Semua Form
+            </x-button>
         </div>
 
-        <div class="mt-4 grid grid-cols-3 gap-7">
+        <div class="mt-5 grid grid-cols-4 gap-4">
             @foreach ($daftarForm as $idForm => $form)
-                <div @class([
-                    'rounded-lg border-2 bg-canvas p-4',
-                    'border-success' => $form['kondisi'] === 'baik',
-                    'border-danger' => $form['kondisi'] !== 'baik',
-                ])>
-                    <img src="{{ asset($form['gambar']) }}" alt="Gambar {{ $form['nama'] }}" class="h-25 w-full rounded-md object-cover">
-                    <div class="mt-4.5 flex items-end justify-between">
-                        <div>
-                            <p class="text-sm font-bold text-ink">{{ $form['nama'] }}</p>
-                            <p class="mt-1 text-xs text-muted">{{ $form['keterangan'] }}</p>
-                        </div>
-                        <x-button variant="secondary" :href="route('admin.alat.form.task', [$idAlat, $idForm])" class="mt-6 h-9 w-20">Detail</x-button>
-                    </div>
+                <div class="flex flex-col rounded-lg border border-line p-2.5">
+                    <img src="{{ asset($form['gambar']) }}" alt="Gambar {{ $form['nama'] }}" class="aspect-[328/120] w-full rounded-md object-cover">
+                    <p class="mt-4 px-1 text-sm font-bold text-ink">{{ $form['nama'] }}</p>
+                    <x-button variant="secondary" :href="route('admin.alat.form.task', [$alat, $idForm])" class="mt-3 h-9 w-full">Detail</x-button>
                 </div>
             @endforeach
         </div>
@@ -75,9 +94,9 @@
 
     <x-slot:modals>
         <x-modal id="modal-ubah-alat" title="Ubah Alat">
-            @include('admin.alat.partials.form-alat', ['alat' => $alat, 'daftarKategori' => $daftarKategori])
+            @include('admin.alat.partials.form-alat', ['alat' => $alat])
         </x-modal>
 
-        @include('admin.alat.partials.modal-tambah-kategori')
+        @include('admin.alat.partials.modal-kelola-kategori')
     </x-slot:modals>
 </x-layouts.admin>

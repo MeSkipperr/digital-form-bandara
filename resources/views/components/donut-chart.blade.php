@@ -1,6 +1,8 @@
 {{--
     Donut chart drawn as SVG ring segments, clockwise from 12 o'clock.
     $segments: list of ['label' => string, 'value' => int, 'color' => hex].
+    Give it an id and pass the same id to <x-chart-legend for="..."> so hovering a legend row
+    highlights its segment. app.js ([data-donut-chart]) swaps the centre text for the hovered segment.
 --}}
 @props([
     'segments',
@@ -19,7 +21,7 @@
     $paths = [];
     $startAngle = 0.0;
 
-    foreach ($segments as $segment) {
+    foreach ($segments as $index => $segment) {
         if ($segment['value'] <= 0 || $total === 0) {
             continue;
         }
@@ -29,6 +31,7 @@
         $largeArc = $sweep > M_PI ? 1 : 0;
 
         $paths[] = [
+            'index' => $index,
             'color' => $segment['color'],
             'd' => 'M '.$point($outerRadius, $startAngle)
                 .' A '.$outerRadius.' '.$outerRadius.' 0 '.$largeArc.' 1 '.$point($outerRadius, $endAngle)
@@ -39,16 +42,34 @@
 
         $startAngle += $sweep;
     }
+
+    $percentage = fn (int $value): string => $total === 0 ? '0%' : round($value / $total * 100).'%';
 @endphp
 
-<div {{ $attributes->class(['relative shrink-0']) }} style="width: {{ $size }}px; height: {{ $size }}px">
-    <svg viewBox="0 0 163 163" class="size-full" role="img" aria-label="{{ $caption }}: {{ $total }}">
+<div
+    {{ $attributes->class(['relative shrink-0']) }}
+    style="width: {{ $size }}px; height: {{ $size }}px"
+    data-donut-chart
+    data-total="{{ $total }}"
+    data-caption="{{ $caption }}"
+>
+    <svg viewBox="0 0 163 163" class="size-full overflow-visible" role="img" aria-label="{{ $caption }}: {{ $total }}">
         @foreach ($paths as $path)
-            <path d="{{ $path['d'] }}" fill="{{ $path['color'] }}" stroke="white" stroke-width="3" />
+            @php($segment = $segments[$path['index']])
+            <path
+                d="{{ $path['d'] }}"
+                fill="{{ $path['color'] }}"
+                stroke="white"
+                stroke-width="3"
+                class="origin-center cursor-pointer transition-[opacity,scale] duration-150 transform-view data-aktif:scale-105 data-redup:opacity-35"
+                data-donut-segment="{{ $path['index'] }}"
+                data-label="{{ $segment['label'] }}"
+                data-value="{{ $segment['value'] }}"
+            ><title>{{ $segment['label'] }}: {{ $segment['value'] }} ({{ $percentage($segment['value']) }})</title></path>
         @endforeach
     </svg>
-    <div class="absolute inset-0 flex flex-col items-center justify-center">
-        <span class="text-[28px] leading-8 font-bold text-ink">{{ $total }}</span>
-        <span class="text-xs text-muted">{{ $caption }}</span>
+    <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span class="text-[28px] leading-8 font-bold text-ink" data-donut-value>{{ $total }}</span>
+        <span class="text-xs text-muted" data-donut-caption>{{ $caption }}</span>
     </div>
 </div>

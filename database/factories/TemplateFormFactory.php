@@ -21,9 +21,11 @@ class TemplateFormFactory extends Factory
         return [
             'id_kategori_alat' => KategoriAlat::factory(),
             'path_gambar' => fake()->optional()->randomElement([
-                'template/xray.png',
-                'template/pendeteksi-bom.png',
-                'template/metal-detector.png',
+                'template-form/xray-stp-atas-bawah.jpeg',
+                'template-form/xray-stp-samping.jpeg',
+                'template-form/ETD.jpeg',
+                'template-form/HHMD.jpeg',
+                'template-form/WTMD.jpeg',
             ]),
             'nama' => fake()->randomElement([
                 'Form Pengecekan X-Ray',

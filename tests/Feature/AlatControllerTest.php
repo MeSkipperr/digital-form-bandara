@@ -25,8 +25,10 @@ class AlatControllerTest extends TestCase
 
         $this->get(route('admin.alat.index'))
             ->assertOk()
-            ->assertSeeText(['Kelola Alat', 'XRAY-01', 'Gudang Belakang', 'X-Ray', 'Tambah Alat', 'Semua kategori', 'Semua status', 'Tambah Kategori'])
-            ->assertSee('name="id_kategori_alat" value="'.$kategori->id.'"', false);
+            ->assertSeeText(['Inspeksi Alat / Alat', 'XRAY-01', 'Gudang Belakang', 'X-Ray', 'Baik', 'Kelola Kategori', 'Tambah Alat'])
+            ->assertSeeText(['Semua kategori', 'Semua status', 'Tambah Kategori', 'Buka Kelola Kategori', 'Menampilkan 1 dari 1 alat'])
+            ->assertSee('name="id_kategori_alat" value="'.$kategori->id.'"', false)
+            ->assertSee('data-jumlah-alat="1"', false);
     }
 
     public function test_index_shows_empty_state_when_no_alat_matches(): void
@@ -50,17 +52,33 @@ class AlatControllerTest extends TestCase
             ->assertSee('XRAY-01')->assertDontSee('BOMB-01');
 
         $this->get(route('admin.alat.index', ['cari' => 'xray', 'kategori' => $kategori->id, 'status' => 'perlu_perbaikan']))
-            ->assertSee('XRAY-02')->assertDontSee('XRAY-01')->assertDontSee('BOMB-01');
+            ->assertSee('XRAY-02')->assertDontSee('XRAY-01')->assertDontSee('BOMB-01')
+            ->assertSeeText('Menampilkan 1 dari 1 alat');
+    }
+
+    public function test_index_paginates_25_alat_per_page_and_keeps_the_filters(): void
+    {
+        $kategori = KategoriAlat::factory()->create();
+        Alat::factory()->count(27)->for($kategori, 'kategoriAlat')->bagus()->create();
+        Alat::factory()->perluPerbaikan()->create();
+
+        $this->get(route('admin.alat.index'))->assertSeeText('Menampilkan 25 dari 28 alat');
+
+        $this->get(route('admin.alat.index', ['status' => 'bagus', 'halaman' => 2]))
+            ->assertSeeText('Menampilkan 2 dari 27 alat')
+            ->assertSee(e(route('admin.alat.index', ['status' => 'bagus', 'halaman' => 1])), false);
     }
 
     public function test_show_renders_detail_and_unknown_alat_is_not_found(): void
     {
         $kategori = KategoriAlat::factory()->create(['nama' => 'X-Ray']);
-        Alat::factory()->for($kategori, 'kategoriAlat')->bagus()->create(['id' => 'XRAY-01']);
+        Alat::factory()->for($kategori, 'kategoriAlat')->bagus()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro Max', 'lokasi' => 'Gudang Belakang']);
 
         $this->get(route('admin.alat.show', 'XRAY-01'))
             ->assertOk()
-            ->assertSeeText(['Detail Alat', 'Informasi Alat', 'X-Ray', 'Bagus', 'Dibuat pada', 'Unduh / Cetak QR', 'Form Pengecekan']);
+            ->assertSeeText(['Inspeksi Alat / Alat / Detail', 'Detail Alat', 'Xray Pro Max', 'Gudang Belakang', 'Kategori Alat', 'X-Ray', 'Baik'])
+            ->assertSeeText(['Ubah Informasi', 'Unduh / Cetak QR', 'Form Pemeriksaan', 'Form untuk kategori X-Ray', 'Lihat Semua Form', 'Form Kebersihan Lensa'])
+            ->assertSee(route('admin.alat.form.task', ['XRAY-01', 4]), false);
 
         $this->get('/admin/alat/XRAY-99')->assertNotFound();
     }

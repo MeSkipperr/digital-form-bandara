@@ -23,7 +23,7 @@ class Alat extends Model
      * @var array<string, array{label: string, warna: string}>
      */
     public const DAFTAR_STATUS = [
-        'bagus' => ['label' => 'Bagus', 'warna' => '#16A34A'],
+        'bagus' => ['label' => 'Baik', 'warna' => '#16A34A'],
         'perlu_perbaikan' => ['label' => 'Perlu Perbaikan', 'warna' => '#D97706'],
     ];
 

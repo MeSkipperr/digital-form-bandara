@@ -31,4 +31,12 @@ class KategoriAlat extends Model
     {
         return $this->hasMany(TemplateForm::class, 'id_kategori_alat');
     }
+
+    /**
+     * Whether any alat or template form still points at this kategori.
+     */
+    public function masihDipakai(): bool
+    {
+        return $this->alat()->exists() || $this->templateForm()->exists();
+    }
 }

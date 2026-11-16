@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAlatRequest;
 use App\Models\Alat;
 use App\Models\KategoriAlat;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -31,11 +32,12 @@ class AlatController extends Controller
             ->when(filled($kategoriAktif), fn ($query) => $query->where('id_kategori_alat', $kategoriAktif))
             ->when(filled($statusAktif), fn ($query) => $query->where('status', $statusAktif))
             ->orderBy('id')
-            ->get();
+            ->paginate(self::JUMLAH_PER_HALAMAN, pageName: 'halaman')
+            ->withQueryString();
 
         return view('admin.alat.index', [
             'daftarAlat' => $daftarAlat,
-            'daftarKategori' => KategoriAlat::query()->orderBy('id')->pluck('nama', 'id')->all(),
+            'daftarKategori' => $this->daftarKategori(),
             'daftarStatus' => Alat::DAFTAR_STATUS,
             'kategoriAktif' => $kategoriAktif,
             'statusAktif' => $statusAktif,
@@ -48,9 +50,9 @@ class AlatController extends Controller
 
         return view('admin.alat.show', [
             'alat' => $alat->load('kategoriAlat'),
-            'daftarKategori' => KategoriAlat::query()->orderBy('id')->pluck('nama', 'id')->all(),
+            'daftarKategori' => $this->daftarKategori(),
             'daftarStatus' => Alat::DAFTAR_STATUS,
-            'daftarForm' => array_slice($contoh['form'], 0, 3, true),
+            'daftarForm' => $contoh['form'],
         ]);
     }
 
@@ -91,5 +93,15 @@ class AlatController extends Controller
             'form' => $contoh['form'][$form] ?? abort(404),
             'daftarTask' => $contoh['task'],
         ]);
+    }
+
+    /**
+     * Kategori options for the alat form dropdown, with usage counts for the delete confirmation.
+     *
+     * @return Collection<int, KategoriAlat>
+     */
+    protected function daftarKategori(): Collection
+    {
+        return KategoriAlat::query()->withCount(['alat', 'templateForm'])->orderBy('id')->get();
     }
 }

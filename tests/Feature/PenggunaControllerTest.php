@@ -25,16 +25,17 @@ class PenggunaControllerTest extends TestCase
 
         $this->get(route('admin.pengguna.index'))
             ->assertOk()
-            ->assertSeeText(['Kelola Pengguna', 'Tambah Pengguna', 'Yoga Pratama', '@yoga001', 'Nonaktif', 'Menampilkan 2 dari 2 pengguna', 'Ubah Pengguna', 'Ubah Kata Sandi']);
+            ->assertSeeText(['Pengguna', 'Tambah Pengguna', 'Yoga Pratama', '@yoga001', 'Status Akun', 'Nonaktif', 'Menampilkan 2 dari 2 pengguna', 'Ubah Pengguna', 'Nama Lengkap', 'Simpan Pengguna'])
+            ->assertDontSeeText('Email');
     }
 
     public function test_index_paginates_and_searches(): void
     {
-        Pengguna::factory()->count(8)->create();
+        Pengguna::factory()->count(27)->create();
         Pengguna::factory()->create(['id' => 'cari001', 'nama' => 'Zzz Target']);
 
-        $this->get(route('admin.pengguna.index'))->assertSeeText('Menampilkan 6 dari 9 pengguna');
-        $this->get(route('admin.pengguna.index', ['halaman' => 2]))->assertSeeText('Menampilkan 3 dari 9 pengguna');
+        $this->get(route('admin.pengguna.index'))->assertSeeText('Menampilkan 25 dari 28 pengguna');
+        $this->get(route('admin.pengguna.index', ['halaman' => 2]))->assertSeeText('Menampilkan 3 dari 28 pengguna');
         $this->get(route('admin.pengguna.index', ['cari' => 'cari001']))
             ->assertSeeText('Zzz Target')
             ->assertSeeText('Menampilkan 1 dari 1 pengguna');
@@ -56,6 +57,19 @@ class PenggunaControllerTest extends TestCase
         $this->assertTrue(Hash::check('rahasia123', $pengguna->kata_sandi_hash));
     }
 
+    public function test_store_can_create_an_inactive_pengguna(): void
+    {
+        $this->post(route('admin.pengguna.store'), [
+            'id' => 'nonaktif001',
+            'nama' => 'Pengguna Nonaktif',
+            'peran' => 'petugas',
+            'kata_sandi' => 'rahasia123',
+            'aktif' => '0',
+        ])->assertRedirect();
+
+        $this->assertFalse(Pengguna::find('nonaktif001')->aktif);
+    }
+
     public function test_store_validates_input(): void
     {
         Pengguna::factory()->create(['id' => 'ada001']);
@@ -69,10 +83,11 @@ class PenggunaControllerTest extends TestCase
         $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
         $hashLama = $pengguna->kata_sandi_hash;
 
-        $this->put(route('admin.pengguna.update', $pengguna), ['nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '0', 'kata_sandi' => ''])
+        $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'diganti001', 'nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '0', 'kata_sandi' => ''])
             ->assertRedirect();
 
         $pengguna->refresh();
+        $this->assertSame('yoga001', $pengguna->id);
         $this->assertSame('Nama Baru', $pengguna->nama);
         $this->assertSame('admin', $pengguna->peran);
         $this->assertFalse($pengguna->aktif);
