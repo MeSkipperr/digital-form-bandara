@@ -19,6 +19,10 @@
  * - [data-line-chart] shows the tooltip of the point nearest the pointer (or picked with the arrow keys),
  *   and falls back to its data-sorot point when the pointer leaves.
  * - [data-donut-chart] highlights the hovered segment (or linked [data-donut-legend] row) and shows its value in the centre.
+ * - Below the xl breakpoint [data-sidebar-buka] slides the [data-sidebar] drawer in from the left. The backdrop,
+ *   [data-sidebar-tutup], Escape and widening the window to desktop close it again.
+ * - A [data-dropdown] inside a [data-gulir-tabel] scroll box opens as a fixed panel, so the scroll box cannot clip it.
+ * - [data-perbesar-gambar] buttons open their image in the [data-perbesar] zoom popup (wheel, pinch, buttons, drag).
  */
 
 document.addEventListener('click', (event) => {
@@ -495,7 +499,13 @@ document.querySelectorAll('[data-line-chart]').forEach((chart) => {
         }
     });
 
-    chart.addEventListener('pointerleave', () => activate(defaultIndex));
+    chart.addEventListener('pointerdown', (event) => activate(nearestIndex(event.clientX)));
+
+    chart.addEventListener('pointerleave', (event) => {
+        if (event.pointerType !== 'touch') {
+            activate(defaultIndex);
+        }
+    });
     chart.addEventListener('blur', () => activate(defaultIndex));
 
     chart.addEventListener('keydown', (event) => {
@@ -544,3 +554,329 @@ document.querySelectorAll('[data-donut-chart]').forEach((chart) => {
         part.addEventListener('pointerleave', () => activate(null));
     });
 });
+
+const sidebar = document.querySelector('[data-sidebar]');
+const sidebarOpener = document.querySelector('[data-sidebar-buka]');
+const sidebarBackdrop = document.querySelector('[data-sidebar-latar]');
+const mainContent = document.querySelector('[data-konten-utama]');
+const desktopQuery = window.matchMedia('(width >= 80rem)');
+
+/**
+ * Opens or closes the mobile / tablet sidebar drawer. While it is open the page behind it is inert and does not scroll.
+ */
+const setSidebarOpen = (isOpen) => {
+    if (!sidebar || isOpen === sidebar.hasAttribute('data-terbuka')) {
+        return;
+    }
+
+    sidebar.toggleAttribute('data-terbuka', isOpen);
+    sidebarBackdrop?.toggleAttribute('data-terbuka', isOpen);
+    document.body.toggleAttribute('data-sidebar-terbuka', isOpen);
+    sidebarOpener?.setAttribute('aria-expanded', String(isOpen));
+
+    if (mainContent) {
+        mainContent.inert = isOpen;
+    }
+
+    if (isOpen) {
+        sidebar.querySelector('[data-sidebar-tutup]')?.focus();
+    } else if (sidebar.contains(document.activeElement)) {
+        sidebarOpener?.focus();
+    }
+};
+
+sidebarOpener?.addEventListener('click', () => setSidebarOpen(true));
+sidebarBackdrop?.addEventListener('click', () => setSidebarOpen(false));
+sidebar?.querySelector('[data-sidebar-tutup]')?.addEventListener('click', () => setSidebarOpen(false));
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        setSidebarOpen(false);
+    }
+});
+
+desktopQuery.addEventListener('change', (event) => {
+    if (event.matches) {
+        setSidebarOpen(false);
+    }
+});
+
+/**
+ * Opens an action menu that sits in a scrolling table as a fixed panel under its button (or above it when there is no
+ * room below), so the scroll box cannot clip it. From xl up the table does not scroll and the menu stays absolute.
+ */
+document.addEventListener('click', (event) => {
+    const summary = event.target.closest('[data-gulir-tabel] details[data-dropdown] > summary');
+    const dropdown = summary?.parentElement;
+    const panel = summary?.nextElementSibling;
+
+    if (!summary || dropdown.open || !panel || getComputedStyle(dropdown.closest('[data-gulir-tabel]')).overflowX === 'visible') {
+        return;
+    }
+
+    event.preventDefault();
+    dropdown.open = true;
+
+    const button = summary.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(panel).marginTop) || 0;
+    const fitsBelow = button.bottom + gap * 2 + panel.offsetHeight <= window.innerHeight;
+
+    panel.style.position = 'fixed';
+    panel.style.right = `${document.documentElement.clientWidth - button.right}px`;
+    panel.style.top = fitsBelow ? `${button.bottom}px` : `${button.top - panel.offsetHeight - gap * 2}px`;
+});
+
+document.addEventListener(
+    'toggle',
+    (event) => {
+        if (event.target instanceof HTMLDetailsElement && event.target.matches('[data-dropdown]') && !event.target.open) {
+            event.target.querySelector(':scope > summary + [style]')?.removeAttribute('style');
+        }
+    },
+    true,
+);
+
+const closeFixedDropdowns = () => {
+    document.querySelectorAll('details[data-dropdown][open]').forEach((dropdown) => {
+        if (dropdown.querySelector(':scope > summary + *')?.style.position === 'fixed') {
+            dropdown.removeAttribute('open');
+        }
+    });
+};
+
+window.addEventListener('resize', closeFixedDropdowns);
+document.addEventListener('scroll', closeFixedDropdowns, { capture: true, passive: true });
+
+const zoomDialog = document.querySelector('[data-perbesar]');
+
+if (zoomDialog) {
+    const stage = zoomDialog.querySelector('[data-perbesar-panggung]');
+    const image = zoomDialog.querySelector('[data-perbesar-gambar-besar]');
+    const title = zoomDialog.querySelector('[data-perbesar-judul]');
+    const scaleLabel = zoomDialog.querySelector('[data-perbesar-skala]');
+    const zoomOutButton = zoomDialog.querySelector('[data-perbesar-aksi="perkecil"]');
+    const zoomInButton = zoomDialog.querySelector('[data-perbesar-aksi="perbesar"]');
+
+    const SKALA_MINIMAL = 1;
+    const SKALA_MAKSIMAL = 5;
+    const LANGKAH_SKALA = 0.5;
+    const SKALA_KETUK_GANDA = 2.5;
+
+    const pointers = new Map();
+    let view = { scale: SKALA_MINIMAL, x: 0, y: 0 };
+    let gesture = null;
+    let dragged = false;
+    let lastTap = null;
+
+    const clampScale = (scale) => Math.min(Math.max(scale, SKALA_MINIMAL), SKALA_MAKSIMAL);
+    const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const midpoint = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+
+    /**
+     * Viewport position of the image centre without the zoom transform, the origin all zoom math is relative to.
+     */
+    const imageCenter = () => {
+        const box = image.getBoundingClientRect();
+
+        return { x: box.left + box.width / 2 - view.x, y: box.top + box.height / 2 - view.y };
+    };
+
+    const isOnImage = (point) => {
+        const box = image.getBoundingClientRect();
+
+        return point.x >= box.left && point.x <= box.right && point.y >= box.top && point.y <= box.bottom;
+    };
+
+    /**
+     * Applies a zoom level and offset, keeping the zoomed image from being dragged past the edges of the stage.
+     */
+    const apply = ({ scale, x, y }, smooth = false) => {
+        const nextScale = clampScale(scale);
+        const maxX = Math.max(0, (image.offsetWidth * nextScale - stage.clientWidth) / 2);
+        const maxY = Math.max(0, (image.offsetHeight * nextScale - stage.clientHeight) / 2);
+
+        view = { scale: nextScale, x: Math.min(Math.max(x, -maxX), maxX), y: Math.min(Math.max(y, -maxY), maxY) };
+
+        image.toggleAttribute('data-halus', smooth);
+        image.style.transform = `translate(${view.x}px, ${view.y}px) scale(${view.scale})`;
+        image.style.cursor = view.scale > SKALA_MINIMAL ? 'grab' : 'zoom-in';
+        scaleLabel.textContent = `${Math.round(view.scale * 100)}%`;
+        zoomOutButton.disabled = view.scale <= SKALA_MINIMAL;
+        zoomInButton.disabled = view.scale >= SKALA_MAKSIMAL;
+    };
+
+    /**
+     * Zooms to `scale` while the image point under `point` stays under it.
+     */
+    const zoomAt = (scale, point, smooth = false) => {
+        const center = imageCenter();
+        const ratio = clampScale(scale) / view.scale;
+        const offsetX = point.x - center.x;
+        const offsetY = point.y - center.y;
+
+        apply({ scale: clampScale(scale), x: offsetX - (offsetX - view.x) * ratio, y: offsetY - (offsetY - view.y) * ratio }, smooth);
+    };
+
+    const startGesture = () => {
+        const points = [...pointers.values()];
+
+        gesture = { view: { ...view }, center: imageCenter(), start: points[0] };
+
+        if (points.length >= 2) {
+            gesture.distance = distance(points[0], points[1]) || 1;
+            gesture.mid = midpoint(points[0], points[1]);
+        }
+    };
+
+    const toggleZoom = (point) => {
+        if (view.scale > SKALA_MINIMAL) {
+            apply({ scale: SKALA_MINIMAL, x: 0, y: 0 }, true);
+        } else {
+            zoomAt(SKALA_KETUK_GANDA, point, true);
+        }
+    };
+
+    document.addEventListener('click', (event) => {
+        const source = event.target.closest('[data-perbesar-gambar]')?.querySelector('img');
+
+        if (!source?.getAttribute('src')) {
+            return;
+        }
+
+        image.src = source.currentSrc || source.src;
+        image.alt = source.alt;
+        title.textContent = source.alt;
+        lastTap = null;
+        apply({ scale: SKALA_MINIMAL, x: 0, y: 0 });
+        zoomDialog.showModal();
+    });
+
+    zoomDialog.addEventListener('click', (event) => {
+        const action = event.target.closest('[data-perbesar-aksi]')?.dataset.perbesarAksi;
+
+        if (action === 'atur-ulang') {
+            apply({ scale: SKALA_MINIMAL, x: 0, y: 0 }, true);
+        } else if (action) {
+            zoomAt(view.scale + (action === 'perbesar' ? LANGKAH_SKALA : -LANGKAH_SKALA), imageCenter(), true);
+        }
+    });
+
+    zoomDialog.addEventListener('keydown', (event) => {
+        const keys = { '+': LANGKAH_SKALA, '=': LANGKAH_SKALA, '-': -LANGKAH_SKALA };
+
+        if (event.key in keys) {
+            event.preventDefault();
+            zoomAt(view.scale + keys[event.key], imageCenter(), true);
+        } else if (event.key === '0') {
+            apply({ scale: SKALA_MINIMAL, x: 0, y: 0 }, true);
+        }
+    });
+
+    stage.addEventListener(
+        'wheel',
+        (event) => {
+            event.preventDefault();
+            const delta = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? event.deltaY * 33 : event.deltaY;
+            zoomAt(view.scale * Math.exp(-delta * 0.002), { x: event.clientX, y: event.clientY });
+        },
+        { passive: false },
+    );
+
+    stage.addEventListener('pointerdown', (event) => {
+        if (event.pointerType === 'mouse' && event.button !== 0) {
+            return;
+        }
+
+        if (pointers.size === 0) {
+            dragged = false;
+        }
+
+        stage.setPointerCapture(event.pointerId);
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        startGesture();
+    });
+
+    stage.addEventListener('pointermove', (event) => {
+        if (!pointers.has(event.pointerId)) {
+            return;
+        }
+
+        pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const points = [...pointers.values()];
+
+        if (points.length >= 2 && gesture.distance) {
+            const scale = clampScale((gesture.view.scale * distance(points[0], points[1])) / gesture.distance);
+            const ratio = scale / gesture.view.scale;
+            const mid = midpoint(points[0], points[1]);
+            const startX = gesture.mid.x - gesture.center.x;
+            const startY = gesture.mid.y - gesture.center.y;
+
+            dragged = true;
+            apply({
+                scale,
+                x: mid.x - gesture.center.x - (startX - gesture.view.x) * ratio,
+                y: mid.y - gesture.center.y - (startY - gesture.view.y) * ratio,
+            });
+
+            return;
+        }
+
+        const moveX = event.clientX - gesture.start.x;
+        const moveY = event.clientY - gesture.start.y;
+
+        if (Math.hypot(moveX, moveY) > 4) {
+            dragged = true;
+        }
+
+        if (dragged && view.scale > SKALA_MINIMAL) {
+            stage.style.cursor = 'grabbing';
+            apply({ ...gesture.view, x: gesture.view.x + moveX, y: gesture.view.y + moveY });
+        }
+    });
+
+    const endPointer = (event) => {
+        if (!pointers.delete(event.pointerId)) {
+            return;
+        }
+
+        if (pointers.size > 0) {
+            startGesture();
+
+            return;
+        }
+
+        gesture = null;
+        stage.style.cursor = '';
+
+        if (dragged || event.type === 'pointercancel') {
+            return;
+        }
+
+        const point = { x: event.clientX, y: event.clientY };
+
+        if (!isOnImage(point)) {
+            lastTap = null;
+            zoomDialog.close();
+
+            return;
+        }
+
+        if (lastTap && event.timeStamp - lastTap.time < 300 && distance(point, lastTap) < 24) {
+            lastTap = null;
+            toggleZoom(point);
+
+            return;
+        }
+
+        lastTap = { ...point, time: event.timeStamp };
+    };
+
+    stage.addEventListener('pointerup', endPointer);
+    stage.addEventListener('pointercancel', endPointer);
+
+    window.addEventListener('resize', () => {
+        if (zoomDialog.open) {
+            apply(view);
+        }
+    });
+}

@@ -2,9 +2,9 @@
 <x-layouts.admin title="Kelola Tugas" breadcrumb="Inspeksi Alat / Form / Tugas" active="form">
     <x-back-button :href="route('admin.form.index')">Kembali ke Kelola Form</x-back-button>
 
-    <div class="mt-7 flex items-center justify-between gap-4">
-        <h2 class="text-2xl font-bold text-ink">{{ $templateForm->nama }}</h2>
-        <x-button class="w-40" data-modal-open="modal-tambah-tugas">
+    <div class="mt-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-xl font-bold text-ink sm:text-2xl">{{ $templateForm->nama }}</h2>
+        <x-button class="w-full sm:w-40" data-modal-open="modal-tambah-tugas">
             <x-icon name="tambah" class="size-4" />
             Tambah Task
         </x-button>
@@ -15,7 +15,7 @@
     <x-card class="mt-6">
         <ul class="divide-y divide-line-soft">
             @forelse ($daftarTugas as $tugas)
-                <li class="flex h-15 items-center gap-4 px-5">
+                <li class="flex h-15 items-center gap-3 px-4 sm:gap-4 sm:px-5">
                     <span class="size-5 shrink-0 rounded-md border border-line bg-canvas" aria-hidden="true"></span>
                     <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ $tugas->nama }}</span>
                     <x-button variant="secondary" class="h-9 w-16 px-0" data-modal-open="modal-ubah-tugas-{{ $tugas->id }}">Ubah</x-button>

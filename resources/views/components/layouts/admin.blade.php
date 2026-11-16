@@ -32,18 +32,39 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="bg-canvas font-sans text-ink antialiased">
+    <body class="bg-canvas font-sans text-ink antialiased data-sidebar-terbuka:overflow-hidden">
         <div class="flex min-h-screen">
-            <aside class="sticky top-0 flex h-screen w-60 shrink-0 flex-col bg-sidebar px-3 pt-5 pb-6">
-                <a href="{{ route('admin.dasbor') }}" class="flex items-center gap-3 px-3">
-                    <span class="flex size-9 items-center justify-center rounded-lg bg-teal">
-                        <x-icon name="alat" class="size-5 text-white" />
-                    </span>
-                    <span class="flex flex-col">
-                        <span class="text-[15px] font-bold leading-[18px] text-white">X-Ray Check</span>
-                        <span class="text-[11px] leading-[13px] text-sidebar-muted">Inspeksi Alat</span>
-                    </span>
-                </a>
+            {{-- Below xl the sidebar is an off-canvas drawer opened by the navbar's burger button (app.js [data-sidebar]). --}}
+            <div
+                class="invisible fixed inset-0 z-30 bg-overlay/45 opacity-0 transition-[opacity,visibility] duration-300 data-terbuka:visible data-terbuka:opacity-100 data-terbuka:transition-opacity xl:hidden"
+                data-sidebar-latar
+                aria-hidden="true"
+            ></div>
+
+            <aside
+                id="sidebar"
+                class="invisible fixed top-0 left-0 z-40 flex h-dvh w-4/5 max-w-xs shrink-0 -translate-x-full flex-col overflow-y-auto bg-sidebar px-3 pt-5 pb-6 shadow-xl transition-[translate,visibility] duration-300 ease-out data-terbuka:visible data-terbuka:translate-x-0 data-terbuka:transition-[translate] xl:visible xl:sticky xl:left-auto xl:z-auto xl:h-screen xl:w-60 xl:max-w-none xl:translate-x-0 xl:overflow-visible xl:shadow-none xl:transition-none"
+                data-sidebar
+            >
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('admin.dasbor') }}" class="flex min-w-0 flex-1 items-center gap-3 px-3">
+                        <span class="flex size-9 items-center justify-center rounded-lg bg-teal">
+                            <x-icon name="alat" class="size-5 text-white" />
+                        </span>
+                        <span class="flex flex-col">
+                            <span class="text-[15px] font-bold leading-[18px] text-white">X-Ray Check</span>
+                            <span class="text-[11px] leading-[13px] text-sidebar-muted">Inspeksi Alat</span>
+                        </span>
+                    </a>
+                    <button
+                        type="button"
+                        class="flex size-9 shrink-0 items-center justify-center rounded-lg text-sidebar-icon transition-colors hover:bg-white/10 hover:text-white xl:hidden"
+                        aria-label="Tutup menu"
+                        data-sidebar-tutup
+                    >
+                        <x-icon name="tutup" class="size-5" />
+                    </button>
+                </div>
 
                 <p class="mt-6.5 px-3 text-[11px] font-bold tracking-wide text-sidebar-label">MENU</p>
 
@@ -82,18 +103,32 @@
                 </div>
             </aside>
 
-            <div class="flex min-w-0 flex-1 flex-col">
-                <header class="flex h-20 shrink-0 flex-col justify-center gap-0.5 border-b border-line bg-white px-8">
-                    <p class="text-xs text-muted">{{ $breadcrumb ?? 'Inspeksi Alat / '.$title }}</p>
-                    <h1 class="text-2xl leading-[29px] font-bold text-primary-dark">{{ $title }}</h1>
+            <div class="flex min-w-0 flex-1 flex-col" data-konten-utama>
+                <header class="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-3 border-b border-line bg-white px-4 sm:h-20 sm:px-6 xl:static xl:z-auto xl:px-8">
+                    <button
+                        type="button"
+                        class="-ml-2 flex size-10 shrink-0 items-center justify-center rounded-lg text-primary-dark transition-colors hover:bg-hover xl:hidden"
+                        aria-label="Buka menu"
+                        aria-controls="sidebar"
+                        aria-expanded="false"
+                        data-sidebar-buka
+                    >
+                        <x-icon name="menu" class="size-6" />
+                    </button>
+                    <div class="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+                        <p class="truncate text-xs text-muted xl:overflow-visible xl:whitespace-normal">{{ $breadcrumb ?? 'Inspeksi Alat / '.$title }}</p>
+                        <h1 class="truncate text-xl leading-tight font-bold text-primary-dark sm:text-2xl xl:overflow-visible xl:leading-[29px] xl:whitespace-normal">{{ $title }}</h1>
+                    </div>
                 </header>
 
-                <main class="flex-1 px-8 pt-6 pb-8">
+                <main class="flex-1 px-4 pt-4 pb-6 sm:px-6 sm:pt-6 sm:pb-8 xl:px-8">
                     {{ $slot }}
                 </main>
             </div>
         </div>
 
         {{ $modals ?? '' }}
+
+        <x-image-zoom />
     </body>
 </html>

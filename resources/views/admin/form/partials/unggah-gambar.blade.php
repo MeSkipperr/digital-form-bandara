@@ -29,10 +29,10 @@
     </label>
 
     <div data-unggah-pratinjau @unless ($urlGambar) hidden @endunless>
-        <div class="flex h-36 items-center justify-center rounded-lg border border-line-soft bg-canvas p-1.5">
-            <img src="{{ $urlGambar }}" alt="Pratinjau gambar form" class="h-full max-w-full rounded-md object-contain" data-unggah-gambar-pratinjau>
+        <div class="flex aspect-video items-center justify-center rounded-lg border border-line-soft bg-canvas p-1.5 sm:aspect-auto sm:h-36">
+            <x-zoomable-image :src="$urlGambar" alt="Pratinjau gambar form" class="h-full max-w-full rounded-md object-contain" data-unggah-gambar-pratinjau />
         </div>
-        <div class="mt-3 flex items-center gap-3">
+        <div class="mt-3 flex flex-wrap items-center gap-3">
             <label for="{{ $idInput }}" class="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line bg-white px-3.5 text-[13px] font-bold text-ink transition-colors hover:border-primary/40 hover:bg-hover">
                 <x-icon name="unggah" class="size-4" />
                 Ganti gambar

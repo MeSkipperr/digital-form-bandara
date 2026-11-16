@@ -20,13 +20,13 @@
 
     <x-alert-messages class="mt-4" />
 
-    <div class="mt-5 grid grid-cols-3 gap-7">
+    <div class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-7">
         @foreach ($daftarFormAlat as $formAlat)
             @php($urlGambar = $formAlat->templateForm->urlGambar())
             <x-card class="flex flex-col p-4">
-                <div class="flex h-30 items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon">
+                <div class="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon xl:aspect-auto xl:h-30">
                     @if ($urlGambar)
-                        <img src="{{ $urlGambar }}" alt="Gambar {{ $formAlat->templateForm->nama }}" class="size-full object-cover">
+                        <x-zoomable-image :src="$urlGambar" alt="Gambar {{ $formAlat->templateForm->nama }}" class="size-full object-contain xl:object-cover" />
                     @else
                         <x-icon name="form" class="size-8" />
                     @endif
@@ -40,7 +40,7 @@
             </x-card>
         @endforeach
 
-        <button type="button" class="flex min-h-62.5 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-line bg-white hover:bg-hover/50" data-modal-open="modal-tambah-form">
+        <button type="button" class="flex min-h-40 flex-col items-center sm:min-h-62.5 justify-center gap-4 rounded-xl border border-dashed border-line bg-white hover:bg-hover/50" data-modal-open="modal-tambah-form">
             <span class="flex size-14 items-center justify-center rounded-full bg-line text-primary">
                 <x-icon name="tambah" class="size-6" />
             </span>

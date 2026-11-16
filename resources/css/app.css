@@ -21,6 +21,10 @@
     --color-primary-dark: #12345a;
     --color-teal: #19a7a0;
 
+    /* Role aliases (see md/design.md): secondary = navy, accent = teal. */
+    --color-secondary: var(--color-primary-dark);
+    --color-accent: var(--color-teal);
+
     --color-success: #16a34a;
     --color-danger: #dc2626;
     --color-danger-dark: #b91c1c;

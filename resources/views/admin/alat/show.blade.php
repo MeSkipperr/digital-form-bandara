@@ -8,7 +8,7 @@
 
     <x-alert-messages class="mt-4" />
 
-    <div class="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
+    <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <x-card class="px-6 pt-6 pb-6">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
@@ -32,7 +32,7 @@
                 </div>
             </div>
 
-            <dl class="mt-5 grid grid-cols-2 gap-x-8 gap-y-5">
+            <dl class="mt-5 grid grid-cols-2 gap-x-4 gap-y-5 sm:gap-x-8">
                 <div>
                     <dt class="text-xs text-muted">ID Alat</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink">{{ $alat->id }}</dd>
@@ -51,7 +51,7 @@
                 </div>
             </dl>
 
-            <x-button variant="secondary" class="mt-6 w-48 font-bold" data-modal-open="modal-ubah-alat">
+            <x-button variant="secondary" class="mt-6 w-full font-bold sm:w-48" data-modal-open="modal-ubah-alat">
                 <x-icon name="pensil" class="size-4" />
                 Ubah Informasi
             </x-button>
@@ -60,7 +60,7 @@
         <x-card class="flex flex-col items-center px-6 pt-7 pb-6">
             <x-qr-code id="qr-alat" :value="$alat->id" :size="200" />
             <p class="mt-6 font-mono text-2xl font-bold text-ink">{{ $alat->id }}</p>
-            <x-button class="mt-auto h-11 w-full" data-unduh-qr="qr-alat" data-nama-file="qr-{{ $alat->id }}">
+            <x-button class="mt-6 h-11 w-full lg:mt-auto" data-unduh-qr="qr-alat" data-nama-file="qr-{{ $alat->id }}">
                 <x-icon name="unduh" class="size-4" />
                 Unduh / Cetak QR
             </x-button>
@@ -68,24 +68,24 @@
     </div>
 
     <x-card class="mt-5 px-6 pt-5 pb-6">
-        <div class="flex items-start justify-between gap-4">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
                 <h2 class="text-base font-bold text-ink">Form Pemeriksaan</h2>
                 <p class="mt-1 text-xs text-muted">Form untuk kategori {{ $namaKategori }}</p>
             </div>
-            <x-button :href="route('admin.alat.form.index', $alat)" class="w-45">
+            <x-button :href="route('admin.alat.form.index', $alat)" class="w-full sm:w-45">
                 <x-icon name="form" class="size-4" />
                 Lihat Semua Form
             </x-button>
         </div>
 
-        <div class="mt-5 grid grid-cols-4 gap-4">
+        <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @forelse ($daftarFormAlat as $formAlat)
                 @php($urlGambar = $formAlat->templateForm->urlGambar())
                 <div class="flex flex-col rounded-lg border border-line p-2.5">
-                    <div class="flex aspect-[328/120] w-full items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon">
+                    <div class="flex aspect-video w-full items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon xl:aspect-[328/120]">
                         @if ($urlGambar)
-                            <img src="{{ $urlGambar }}" alt="Gambar {{ $formAlat->templateForm->nama }}" class="size-full object-cover">
+                            <x-zoomable-image :src="$urlGambar" alt="Gambar {{ $formAlat->templateForm->nama }}" class="size-full object-contain xl:object-cover" />
                         @else
                             <x-icon name="form" class="size-7" />
                         @endif
@@ -94,7 +94,7 @@
                     <x-button variant="secondary" :href="route('admin.alat.form.task', [$alat, $formAlat])" class="mt-3 h-9 w-full">Detail</x-button>
                 </div>
             @empty
-                <p class="col-span-4 rounded-lg border border-dashed border-line px-6 py-8 text-center text-sm text-muted">
+                <p class="col-span-full rounded-lg border border-dashed border-line px-6 py-8 text-center text-sm text-muted">
                     Belum ada form yang dipasang. Buka "Lihat Semua Form" untuk menambahkan form.
                 </p>
             @endforelse

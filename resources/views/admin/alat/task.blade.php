@@ -9,12 +9,12 @@
 <x-layouts.admin title="Kelola Task" active="alat" breadcrumb="Inspeksi Alat / Alat / Form / Task">
     <x-back-button :href="route('admin.alat.form.index', $alat)" />
 
-    <div class="mt-7 flex items-start justify-between gap-4">
+    <div class="mt-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-            <h2 class="text-2xl font-bold text-ink">{{ $templateForm->nama }}</h2>
+            <h2 class="text-xl font-bold text-ink sm:text-2xl">{{ $templateForm->nama }}</h2>
             <p class="mt-1 text-[13px] text-muted">{{ $alat->id }}, {{ $daftarTugas->count() }} task</p>
         </div>
-        <x-button :href="route('admin.form.tugas.index', $templateForm)" class="w-40">
+        <x-button :href="route('admin.form.tugas.index', $templateForm)" class="w-full sm:w-40">
             <x-icon name="pensil" class="size-4" />
             Kelola Task
         </x-button>
@@ -23,7 +23,7 @@
     <x-card class="mt-8">
         <ul class="divide-y divide-line-soft">
             @forelse ($daftarTugas as $tugas)
-                <li class="flex h-15 items-center gap-4 px-6">
+                <li class="flex h-15 items-center gap-4 px-4 sm:px-6">
                     <span class="size-5 shrink-0 rounded-md border border-line bg-canvas" aria-hidden="true"></span>
                     <span class="min-w-0 flex-1 truncate text-sm text-ink">{{ $tugas->nama }}</span>
                 </li>

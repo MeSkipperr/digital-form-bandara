@@ -10,17 +10,17 @@
                 <h2 class="text-base font-bold text-ink">Perbandingan Status Alat</h2>
                 <a href="{{ route('admin.alat.index') }}" class="text-xs text-primary hover:underline">Alat ›</a>
             </div>
-            <div class="mt-8 flex flex-1 items-center gap-6">
+            <div class="mt-8 flex flex-1 flex-col items-center gap-6 sm:flex-row">
                 <x-donut-chart id="grafik-status-alat" :segments="$statusAlat" caption="Total alat" />
-                <x-chart-legend for="grafik-status-alat" :segments="$statusAlat" class="flex-1" />
+                <x-chart-legend for="grafik-status-alat" :segments="$statusAlat" class="flex-1 self-stretch sm:self-auto" />
             </div>
         </x-card>
 
         <x-card class="px-6 pt-5 pb-4">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-3">
                 <h2 class="text-base font-bold text-ink">Jumlah Form yang Diisi Setiap Hari</h2>
-                <details data-dropdown class="relative">
-                    <summary class="flex h-7 cursor-pointer items-center rounded-md bg-hover px-3 text-xs font-bold text-primary hover:bg-line">
+                <details data-dropdown class="relative shrink-0">
+                    <summary class="flex h-7 cursor-pointer items-center rounded-md bg-hover px-3 text-xs font-bold whitespace-nowrap text-primary hover:bg-line">
                         {{ $daftarPeriode[$periode] }}
                     </summary>
                     <div class="absolute top-full right-0 z-20 mt-1.5 flex w-28 flex-col gap-0.5 rounded-lg border border-line bg-white p-1.5 shadow-lg">
@@ -38,7 +38,9 @@
                     </div>
                 </details>
             </div>
-            <x-line-chart :points="$formPerHari" :highlight="$titikSorot" :max="$batasGrafik" :step="$langkahGrafik" class="mt-1" />
+            <div class="overflow-x-auto overscroll-x-contain sm:overflow-visible">
+                <x-line-chart :points="$formPerHari" :highlight="$titikSorot" :max="$batasGrafik" :step="$langkahGrafik" class="mt-1 min-w-xl max-sm:touch-pan-x sm:min-w-0" />
+            </div>
         </x-card>
 
         <x-card class="flex flex-col px-6 pt-6 pb-6">

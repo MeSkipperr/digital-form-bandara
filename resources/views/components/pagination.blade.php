@@ -21,11 +21,11 @@
     $linkClass = 'flex h-7 min-w-9 items-center justify-center rounded-md border border-line px-2';
 @endphp
 
-<div {{ $attributes->class(['flex items-center justify-between gap-4']) }}>
+<div {{ $attributes->class(['flex flex-col items-center gap-3 sm:flex-row sm:justify-between sm:gap-4']) }}>
     <p class="text-xs text-muted">Menampilkan {{ $paginator->count() }} dari {{ $paginator->total() }} {{ $label }}</p>
 
     @if ($paginator->hasPages())
-        <nav class="flex items-center gap-2 text-sm" aria-label="Halaman">
+        <nav class="flex flex-wrap items-center justify-center gap-2 text-sm" aria-label="Halaman">
             @if ($paginator->onFirstPage())
                 <span class="{{ $linkClass }} bg-white text-line" aria-hidden="true"><x-icon name="chevron-kiri" class="size-4" /></span>
             @else

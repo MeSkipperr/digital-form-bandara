@@ -3,10 +3,10 @@
     <h2 class="text-xl font-bold text-ink">Pilih Form</h2>
     <p class="mt-1.5 text-[13px] text-muted">{{ $daftarForm->total() }} form tersedia</p>
 
-    <form method="get" class="mt-5 flex items-center gap-3" data-auto-submit>
+    <form method="get" class="mt-5 grid grid-cols-2 items-center gap-3 sm:flex" data-auto-submit>
         <x-form.select name="kategori" :options="['' => 'Semua kategori'] + $daftarKategori->pluck('nama', 'id')->all()" :selected="$kategoriAktif" surface="bg-white" class="w-45" aria-label="Filter kategori" />
 
-        <x-button variant="secondary" class="ml-auto w-40 font-bold" data-modal-open="modal-kelola-kategori">
+        <x-button variant="secondary" class="font-bold sm:ml-auto sm:w-40" data-modal-open="modal-kelola-kategori">
             <x-icon name="label" class="size-4" />
             Kelola Kategori
         </x-button>
@@ -18,9 +18,9 @@
         @forelse ($daftarForm as $form)
             @php($urlGambar = $form->urlGambar())
             <x-card class="flex flex-col p-4">
-                <div class="flex h-30 items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon">
+                <div class="flex aspect-video items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon xl:aspect-auto xl:h-30">
                     @if ($urlGambar)
-                        <img src="{{ $urlGambar }}" alt="Gambar {{ $form->nama }}" class="size-full object-cover">
+                        <x-zoomable-image :src="$urlGambar" alt="Gambar {{ $form->nama }}" class="size-full object-contain xl:object-cover" />
                     @else
                         <x-icon name="form" class="size-8" />
                     @endif

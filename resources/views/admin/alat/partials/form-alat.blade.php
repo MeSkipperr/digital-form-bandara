@@ -26,7 +26,7 @@
     @endif
     <input type="hidden" name="_form" value="{{ $kunciForm }}">
 
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <x-form.input
             label="ID Alat"
             name="id"
