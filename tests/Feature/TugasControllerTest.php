@@ -94,4 +94,14 @@ class TugasControllerTest extends TestCase
 
         $this->assertModelExists($tugas);
     }
+
+    public function test_tambah_modal_posts_a_new_task_even_when_the_form_has_tasks(): void
+    {
+        $tugas = Tugas::factory()->create();
+
+        $this->get(route('admin.form.tugas.index', $tugas->templateForm))
+            ->assertOk()
+            ->assertSee('action="'.route('admin.form.tugas.store', $tugas->templateForm).'"', false)
+            ->assertSee('name="_form" value="tambah-tugas"', false);
+    }
 }

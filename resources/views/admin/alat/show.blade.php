@@ -6,9 +6,7 @@
 <x-layouts.admin title="Detail Alat" active="alat" breadcrumb="Inspeksi Alat / Alat / Detail">
     <x-back-button :href="route('admin.alat.index')" />
 
-    @if (session('status'))
-        <p class="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success" role="status">{{ session('status') }}</p>
-    @endif
+    <x-alert-messages class="mt-4" />
 
     <div class="mt-5 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5">
         <x-card class="px-6 pt-6 pb-6">
@@ -82,13 +80,24 @@
         </div>
 
         <div class="mt-5 grid grid-cols-4 gap-4">
-            @foreach ($daftarForm as $idForm => $form)
+            @forelse ($daftarFormAlat as $formAlat)
+                @php($urlGambar = $formAlat->templateForm->urlGambar())
                 <div class="flex flex-col rounded-lg border border-line p-2.5">
-                    <img src="{{ asset($form['gambar']) }}" alt="Gambar {{ $form['nama'] }}" class="aspect-[328/120] w-full rounded-md object-cover">
-                    <p class="mt-4 px-1 text-sm font-bold text-ink">{{ $form['nama'] }}</p>
-                    <x-button variant="secondary" :href="route('admin.alat.form.task', [$alat, $idForm])" class="mt-3 h-9 w-full">Detail</x-button>
+                    <div class="flex aspect-[328/120] w-full items-center justify-center overflow-hidden rounded-md bg-primary-dark text-sidebar-icon">
+                        @if ($urlGambar)
+                            <img src="{{ $urlGambar }}" alt="Gambar {{ $formAlat->templateForm->nama }}" class="size-full object-cover">
+                        @else
+                            <x-icon name="form" class="size-7" />
+                        @endif
+                    </div>
+                    <p class="mt-4 px-1 text-sm font-bold text-ink">{{ $formAlat->templateForm->nama }}</p>
+                    <x-button variant="secondary" :href="route('admin.alat.form.task', [$alat, $formAlat])" class="mt-3 h-9 w-full">Detail</x-button>
                 </div>
-            @endforeach
+            @empty
+                <p class="col-span-4 rounded-lg border border-dashed border-line px-6 py-8 text-center text-sm text-muted">
+                    Belum ada form yang dipasang. Buka "Lihat Semua Form" untuk menambahkan form.
+                </p>
+            @endforelse
         </div>
     </x-card>
 

@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Database\Factories\RiwayatPengecekanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -55,6 +57,17 @@ class RiwayatPengecekan extends Model
         return [
             'dicek_pada' => 'datetime',
         ];
+    }
+
+    /**
+     * Riwayat an officer already acted on (every status except the generated `tertunda`).
+     *
+     * @param  Builder<RiwayatPengecekan>  $query
+     */
+    #[Scope]
+    protected function tercatat(Builder $query): void
+    {
+        $query->whereNot('status', 'tertunda');
     }
 
     /**

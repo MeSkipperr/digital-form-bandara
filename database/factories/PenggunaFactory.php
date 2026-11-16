@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\Pengguna;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -31,7 +30,7 @@ class PenggunaFactory extends Factory
             'id' => fake()->unique()->numerify($prefix.'-###'),
             'nama' => $nama,
             'peran' => 'petugas',
-            'kata_sandi_hash' => static::$kataSandi ??= Hash::make('password'),
+            'kata_sandi_hash' => static::$kataSandi ??= Pengguna::hashKataSandi('password'),
             'aktif' => true,
         ];
     }

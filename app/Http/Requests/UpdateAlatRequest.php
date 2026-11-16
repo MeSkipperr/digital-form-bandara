@@ -2,20 +2,17 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Arr;
 
-class UpdateAlatRequest extends FormRequest
+class UpdateAlatRequest extends StoreAlatRequest
 {
     /**
+     * Same fields as tambah except the ID, which cannot change.
+     *
      * @return array<string, list<string>>
      */
     public function rules(): array
     {
-        return [
-            'id_kategori_alat' => ['required', 'integer', 'exists:kategori_alat,id'],
-            'model' => ['nullable', 'string', 'max:100'],
-            'lokasi' => ['nullable', 'string', 'max:100'],
-            'deskripsi' => ['nullable', 'string'],
-        ];
+        return Arr::except(parent::rules(), 'id');
     }
 }

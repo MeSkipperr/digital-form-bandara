@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 #[Table(name: 'form_alat', timestamps: false)]
 #[Fillable(['id_alat', 'id_template_form'])]
@@ -39,5 +40,25 @@ class FormAlat extends Model
     public function riwayatPengecekan(): HasMany
     {
         return $this->hasMany(RiwayatPengecekan::class, 'id_form_alat');
+    }
+
+    /**
+     * Whether an officer already filled (or skipped) an inspection of this form, which must be kept as history.
+     */
+    public function punyaRiwayatTercatat(): bool
+    {
+        return $this->riwayatPengecekan()->tercatat()->exists();
+    }
+
+    /**
+     * Delete this form_alat with its pending (`tertunda`) riwayat, the empty rows generated every day.
+     * Check punyaRiwayatTercatat() first: the foreign key refuses to delete it while other riwayat remain.
+     */
+    public function hapusBesertaRiwayatTertunda(): void
+    {
+        DB::transaction(function (): void {
+            $this->riwayatPengecekan()->where('status', 'tertunda')->delete();
+            $this->delete();
+        });
     }
 }

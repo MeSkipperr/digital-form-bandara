@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 #[Table(name: 'alat', keyType: 'string', incrementing: false, timestamps: false)]
 #[Fillable(['id', 'id_kategori_alat', 'status', 'model', 'deskripsi', 'lokasi'])]
@@ -53,5 +54,13 @@ class Alat extends Model
     public function formAlat(): HasMany
     {
         return $this->hasMany(FormAlat::class, 'id_alat');
+    }
+
+    /**
+     * @return HasManyThrough<RiwayatPengecekan, FormAlat, $this>
+     */
+    public function riwayatPengecekan(): HasManyThrough
+    {
+        return $this->hasManyThrough(RiwayatPengecekan::class, FormAlat::class, 'id_alat', 'id_form_alat');
     }
 }

@@ -35,9 +35,8 @@ class PenggunaController extends Controller
 
     public function store(StorePenggunaRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-        $data['kata_sandi_hash'] = $data['kata_sandi'];
-        unset($data['kata_sandi']);
+        $data = $request->safe()->except('kata_sandi');
+        $data['kata_sandi_hash'] = Pengguna::hashKataSandi($request->validated('kata_sandi'));
 
         Pengguna::create($data + ['aktif' => true]);
 
@@ -46,12 +45,11 @@ class PenggunaController extends Controller
 
     public function update(UpdatePenggunaRequest $request, Pengguna $pengguna): RedirectResponse
     {
-        $data = $request->validated();
-        $kataSandi = $data['kata_sandi'] ?? null;
-        unset($data['kata_sandi']);
+        $data = $request->safe()->except('kata_sandi');
+        $kataSandi = $request->validated('kata_sandi');
 
         if (filled($kataSandi)) {
-            $data['kata_sandi_hash'] = $kataSandi;
+            $data['kata_sandi_hash'] = Pengguna::hashKataSandi($kataSandi);
         }
 
         $pengguna->update($data);

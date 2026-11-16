@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AlatController;
 use App\Http\Controllers\Admin\DasborController;
+use App\Http\Controllers\Admin\FormAlatController;
 use App\Http\Controllers\Admin\KategoriAlatController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\RiwayatPengecekanController;
@@ -23,8 +24,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/alat/{alat}', [AlatController::class, 'show'])->name('alat.show');
     Route::put('/alat/{alat}', [AlatController::class, 'update'])->name('alat.update');
     Route::delete('/alat/{alat}', [AlatController::class, 'destroy'])->name('alat.destroy');
-    Route::get('/alat/{alat}/form', [AlatController::class, 'formIndex'])->name('alat.form.index');
-    Route::get('/alat/{alat}/form/{form}', [AlatController::class, 'task'])->whereNumber('form')->name('alat.form.task');
+    Route::get('/alat/{alat}/form', [FormAlatController::class, 'index'])->name('alat.form.index');
+    Route::post('/alat/{alat}/form', [FormAlatController::class, 'store'])->name('alat.form.store');
+    Route::get('/alat/{alat}/form/{formAlat}', [FormAlatController::class, 'show'])->whereNumber('formAlat')->name('alat.form.task');
+    Route::delete('/alat/{alat}/form/{formAlat}', [FormAlatController::class, 'destroy'])->whereNumber('formAlat')->name('alat.form.destroy');
     Route::get('/form', [TemplateFormController::class, 'index'])->name('form.index');
     Route::post('/form', [TemplateFormController::class, 'store'])->name('form.store');
     Route::put('/form/{templateForm}', [TemplateFormController::class, 'update'])->name('form.update');

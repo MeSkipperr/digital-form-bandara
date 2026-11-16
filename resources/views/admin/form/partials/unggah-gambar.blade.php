@@ -4,7 +4,12 @@
 
     @var string $idInput
     @var string|null $urlGambar  current image when editing
+    @var string|null $pesanGalat  server-side validation message for `gambar`
 --}}
+@php
+    $pesanGalat ??= null;
+@endphp
+
 <div data-unggah-gambar data-url-asli="{{ $urlGambar }}">
     <x-form.label>Unggah Gambar</x-form.label>
     <input type="file" id="{{ $idInput }}" name="gambar" accept="image/png,image/jpeg" class="sr-only" data-unggah-input>
@@ -36,5 +41,5 @@
         </div>
     </div>
 
-    <p class="mt-1.5 text-xs text-danger" data-unggah-galat hidden></p>
+    <p class="mt-1.5 text-xs text-danger" data-unggah-galat @unless ($pesanGalat) hidden @endunless>{{ $pesanGalat }}</p>
 </div>

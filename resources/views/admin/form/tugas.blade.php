@@ -29,7 +29,7 @@
 
     <x-slot:modals>
         <x-modal id="modal-tambah-tugas" title="Tambah Task">
-            @include('admin.form.partials.form-tugas')
+            @include('admin.form.partials.form-tugas', ['tugas' => null])
         </x-modal>
 
         @foreach ($daftarTugas as $tugas)

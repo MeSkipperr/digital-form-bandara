@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Alat;
+use App\Models\FormAlat;
 use App\Models\KategoriAlat;
+use App\Models\RiwayatPengecekan;
+use App\Models\TemplateForm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -72,27 +75,25 @@ class AlatControllerTest extends TestCase
     public function test_show_renders_detail_and_unknown_alat_is_not_found(): void
     {
         $kategori = KategoriAlat::factory()->create(['nama' => 'X-Ray']);
-        Alat::factory()->for($kategori, 'kategoriAlat')->bagus()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro Max', 'lokasi' => 'Gudang Belakang']);
+        $alat = Alat::factory()->for($kategori, 'kategoriAlat')->bagus()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro Max', 'lokasi' => 'Gudang Belakang']);
+        $formAlat = FormAlat::factory()->for($alat)->for(TemplateForm::factory()->for($kategori, 'kategoriAlat')->create(['nama' => 'Form Kebersihan Lensa']))->create();
 
         $this->get(route('admin.alat.show', 'XRAY-01'))
             ->assertOk()
             ->assertSeeText(['Inspeksi Alat / Alat / Detail', 'Detail Alat', 'Xray Pro Max', 'Gudang Belakang', 'Kategori Alat', 'X-Ray', 'Baik'])
             ->assertSeeText(['Ubah Informasi', 'Unduh / Cetak QR', 'Form Pemeriksaan', 'Form untuk kategori X-Ray', 'Lihat Semua Form', 'Form Kebersihan Lensa'])
-            ->assertSee(route('admin.alat.form.task', ['XRAY-01', 4]), false);
+            ->assertSee(route('admin.alat.form.task', ['XRAY-01', $formAlat]), false);
 
         $this->get('/admin/alat/XRAY-99')->assertNotFound();
     }
 
-    public function test_form_and_task_pages_render_for_existing_alat(): void
+    public function test_show_without_assigned_forms_shows_an_empty_state(): void
     {
-        Alat::factory()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro Max']);
+        Alat::factory()->create(['id' => 'XRAY-01']);
 
-        $this->get(route('admin.alat.form.index', 'XRAY-01'))
-            ->assertOk()->assertSeeText(['Kelola Form', 'XRAY-01, Xray Pro Max']);
-        $this->get(route('admin.alat.form.task', ['XRAY-01', 1]))
-            ->assertOk()->assertSeeText(['Kelola Task', 'Form Xray Atas']);
-        $this->get(route('admin.alat.form.task', ['XRAY-01', 99]))->assertNotFound();
-        $this->get(route('admin.alat.form.index', 'XRAY-99'))->assertNotFound();
+        $this->get(route('admin.alat.show', 'XRAY-01'))
+            ->assertOk()
+            ->assertSeeText('Belum ada form yang dipasang.');
     }
 
     public function test_store_creates_alat_with_default_status(): void
@@ -114,7 +115,34 @@ class AlatControllerTest extends TestCase
         Alat::factory()->create(['id' => 'XRAY-01']);
 
         $this->post(route('admin.alat.store'), ['id' => 'XRAY-01', 'id_kategori_alat' => 999])
-            ->assertSessionHasErrors(['id', 'id_kategori_alat']);
+            ->assertSessionHasErrors([
+                'id' => 'ID alat ini sudah dipakai.',
+                'id_kategori_alat' => 'Kategori tidak ditemukan.',
+            ]);
+    }
+
+    public function test_store_rejects_an_id_that_cannot_be_used_in_urls(): void
+    {
+        $kategori = KategoriAlat::factory()->create();
+
+        $this->post(route('admin.alat.store'), ['id' => 'XRAY 01/A', 'id_kategori_alat' => $kategori->id])
+            ->assertSessionHasErrors(['id' => 'ID alat hanya boleh berisi huruf, angka, tanda - dan _.']);
+
+        $this->assertDatabaseCount('alat', 0);
+    }
+
+    public function test_failed_tambah_reopens_its_modal_with_the_old_input_and_the_error(): void
+    {
+        KategoriAlat::factory()->create();
+        Alat::factory()->create(['id' => 'XRAY-01']);
+
+        $this->from(route('admin.alat.index'))
+            ->followingRedirects()
+            ->post(route('admin.alat.store'), ['_form' => 'tambah-alat', 'id' => 'XRAY-01', 'model' => 'Model Diketik'])
+            ->assertOk()
+            ->assertSee('data-buka-ulang', false)
+            ->assertSee('value="Model Diketik"', false)
+            ->assertSeeText(['ID alat ini sudah dipakai.', 'Kategori wajib dipilih.']);
     }
 
     public function test_update_changes_fields_but_never_the_id(): void
@@ -133,12 +161,51 @@ class AlatControllerTest extends TestCase
         $this->assertDatabaseMissing('alat', ['id' => 'HACK-01']);
     }
 
-    public function test_destroy_deletes_alat(): void
+    public function test_destroy_deletes_alat_with_its_forms_and_pending_riwayat(): void
     {
         $alat = Alat::factory()->create(['id' => 'XRAY-01']);
+        $formAlat = FormAlat::factory()->for($alat)->create();
+        $riwayatTertunda = RiwayatPengecekan::factory()->for($formAlat)->tertunda()->create();
 
-        $this->delete(route('admin.alat.destroy', $alat))->assertRedirect(route('admin.alat.index'));
+        $this->delete(route('admin.alat.destroy', $alat))
+            ->assertRedirect(route('admin.alat.index'))
+            ->assertSessionHas('status', 'Alat berhasil dihapus.');
 
-        $this->assertDatabaseMissing('alat', ['id' => 'XRAY-01']);
+        $this->assertModelMissing($alat);
+        $this->assertModelMissing($formAlat);
+        $this->assertModelMissing($riwayatTertunda);
+    }
+
+    public function test_destroy_refuses_alat_with_filled_riwayat(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01']);
+        $riwayat = RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat))->bagus()->create();
+
+        $this->delete(route('admin.alat.destroy', $alat))
+            ->assertRedirect(route('admin.alat.index'))
+            ->assertSessionHasErrors(['alat' => 'Alat XRAY-01 sudah memiliki riwayat pengecekan sehingga tidak dapat dihapus.']);
+
+        $this->assertModelExists($alat);
+        $this->assertModelExists($riwayat);
+    }
+
+    public function test_hapus_modal_warns_about_alat_with_filled_riwayat(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01']);
+        RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat))->kurangBagus()->create();
+
+        $this->get(route('admin.alat.index'))
+            ->assertOk()
+            ->assertSeeText('Alat XRAY-01 sudah memiliki 1 riwayat pengecekan');
+    }
+
+    public function test_tambah_modal_posts_a_new_alat_even_when_the_table_has_rows(): void
+    {
+        Alat::factory()->create(['id' => 'XRAY-01']);
+
+        $this->get(route('admin.alat.index'))
+            ->assertOk()
+            ->assertSee('action="'.route('admin.alat.store').'"', false)
+            ->assertSee('name="_form" value="tambah-alat"', false);
     }
 }

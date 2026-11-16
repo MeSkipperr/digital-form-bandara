@@ -57,7 +57,7 @@
 
     <x-slot:modals>
         <x-modal id="modal-tambah-form" title="Tambah Form">
-            @include('admin.form.partials.form-template')
+            @include('admin.form.partials.form-template', ['templateForm' => null])
         </x-modal>
 
         @foreach ($daftarForm as $form)

@@ -7,9 +7,7 @@
         </x-button>
     </form>
 
-    @if (session('status'))
-        <p class="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success" role="status">{{ session('status') }}</p>
-    @endif
+    <x-alert-messages class="mt-4" />
 
     <x-card class="mt-4">
         <table class="w-full">
@@ -55,7 +53,7 @@
 
     <x-slot:modals>
         <x-modal id="modal-tambah-pengguna" title="Tambah Pengguna" description="Atur identitas dan peran pengguna aplikasi.">
-            @include('admin.pengguna.partials.form-pengguna')
+            @include('admin.pengguna.partials.form-pengguna', ['pengguna' => null])
         </x-modal>
 
         @foreach ($daftarPengguna as $pengguna)

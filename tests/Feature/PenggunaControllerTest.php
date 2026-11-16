@@ -98,4 +98,72 @@ class PenggunaControllerTest extends TestCase
 
         $this->assertTrue(Hash::check('sandibaru123', $pengguna->fresh()->kata_sandi_hash));
     }
+
+    public function test_store_hashes_the_password_with_the_hash_password_key(): void
+    {
+        config(['hashing.password_key' => 'kunci-uji']);
+
+        $this->post(route('admin.pengguna.store'), [
+            'id' => 'baru001',
+            'nama' => 'Pengguna Baru',
+            'peran' => 'petugas',
+            'kata_sandi' => 'rahasia123',
+        ])->assertRedirect();
+
+        $pengguna = Pengguna::find('baru001');
+        $this->assertTrue($pengguna->cocokKataSandi('rahasia123'));
+        $this->assertFalse($pengguna->cocokKataSandi('salah1234'));
+        $this->assertTrue(Hash::check(hash_hmac('sha256', 'rahasia123', 'kunci-uji'), $pengguna->kata_sandi_hash));
+        $this->assertFalse(Hash::check('rahasia123', $pengguna->kata_sandi_hash));
+    }
+
+    public function test_update_hashes_the_new_password_with_the_hash_password_key(): void
+    {
+        config(['hashing.password_key' => 'kunci-uji']);
+        $pengguna = Pengguna::factory()->create();
+
+        $this->put(route('admin.pengguna.update', $pengguna), ['nama' => 'Nama Baru', 'peran' => 'petugas', 'aktif' => '1', 'kata_sandi' => 'sandibaru123'])
+            ->assertRedirect();
+
+        $this->assertTrue($pengguna->fresh()->cocokKataSandi('sandibaru123'));
+    }
+
+    public function test_store_rejects_a_username_that_cannot_be_used_in_urls(): void
+    {
+        $this->post(route('admin.pengguna.store'), ['id' => 'yoga 001', 'nama' => 'Yoga', 'peran' => 'petugas', 'kata_sandi' => 'rahasia123'])
+            ->assertSessionHasErrors(['id' => 'Username hanya boleh berisi huruf, angka, tanda - dan _.']);
+
+        $this->assertDatabaseCount('pengguna', 0);
+    }
+
+    public function test_failed_store_keeps_the_input_but_never_flashes_the_password(): void
+    {
+        $this->post(route('admin.pengguna.store'), ['_form' => 'tambah-pengguna', 'id' => 'baru001', 'nama' => 'Nama Diketik', 'peran' => 'petugas', 'kata_sandi' => 'pendek'])
+            ->assertSessionHasErrors(['kata_sandi' => 'Kata sandi minimal 8 karakter.'])
+            ->assertSessionHasInput('nama', 'Nama Diketik')
+            ->assertSessionMissing('_old_input.kata_sandi');
+    }
+
+    public function test_failed_store_reopens_the_tambah_modal_with_the_old_input(): void
+    {
+        Pengguna::factory()->create(['id' => 'ada001']);
+
+        $this->from(route('admin.pengguna.index'))
+            ->followingRedirects()
+            ->post(route('admin.pengguna.store'), ['_form' => 'tambah-pengguna', 'id' => 'ada001', 'nama' => 'Nama Diketik', 'peran' => 'petugas', 'kata_sandi' => 'rahasia123'])
+            ->assertOk()
+            ->assertSee('data-buka-ulang', false)
+            ->assertSee('value="Nama Diketik"', false)
+            ->assertSeeText('Username ini sudah dipakai.');
+    }
+
+    public function test_tambah_modal_posts_a_new_pengguna_even_when_the_table_has_rows(): void
+    {
+        Pengguna::factory()->create(['id' => 'yoga001']);
+
+        $this->get(route('admin.pengguna.index'))
+            ->assertOk()
+            ->assertSee('action="'.route('admin.pengguna.store').'"', false)
+            ->assertSee('name="_form" value="tambah-pengguna"', false);
+    }
 }

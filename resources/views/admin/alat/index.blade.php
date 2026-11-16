@@ -14,9 +14,7 @@
         </x-button>
     </form>
 
-    @if (session('status'))
-        <p class="mt-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success" role="status">{{ session('status') }}</p>
-    @endif
+    <x-alert-messages class="mt-4" />
 
     <x-card class="mt-5">
         <table class="w-full">
@@ -60,7 +58,7 @@
 
     <x-slot:modals>
         <x-modal id="modal-tambah-alat" title="Tambah Alat">
-            @include('admin.alat.partials.form-alat')
+            @include('admin.alat.partials.form-alat', ['alat' => null])
         </x-modal>
 
         @foreach ($daftarAlat as $alat)
@@ -68,11 +66,15 @@
                 @include('admin.alat.partials.form-alat', ['alat' => $alat])
             </x-modal>
             <x-modal id="modal-hapus-alat-{{ $alat->id }}" title="Hapus Alat" description="Alat {{ $alat->id }} akan dihapus permanen.">
+                @if ($alat->riwayat_tercatat_count > 0)
+                    <x-danger-alert>Alat {{ $alat->id }} sudah memiliki {{ $alat->riwayat_tercatat_count }} riwayat pengecekan, sehingga tidak dapat dihapus agar riwayatnya tetap tersimpan.</x-danger-alert>
+                @endif
+
                 <form method="post" action="{{ route('admin.alat.destroy', $alat) }}" class="mt-4 flex items-center justify-end gap-3">
                     @csrf
                     @method('delete')
                     <x-button variant="secondary" class="w-25" data-modal-close>Batal</x-button>
-                    <x-button type="submit" variant="danger" class="w-30">Hapus</x-button>
+                    <x-button type="submit" variant="danger" class="w-30 disabled:cursor-not-allowed disabled:opacity-50" :disabled="$alat->riwayat_tercatat_count > 0">Hapus</x-button>
                 </form>
             </x-modal>
         @endforeach

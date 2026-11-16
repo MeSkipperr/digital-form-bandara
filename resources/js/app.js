@@ -3,7 +3,10 @@
  *
  * - [data-modal-open="id"] opens the <dialog id="id"> as a modal.
  * - [data-modal-close] closes the closest open <dialog>.
- * - Clicking a dialog's backdrop closes it.
+ * - Clicking a dialog's backdrop closes it. Closing a dialog resets its forms, so "Batal" discards the typed input.
+ * - A form[data-buka-ulang] (rendered after a validation error) reopens its dialog on page load.
+ * - An invalid required field inside a closed <details> dropdown opens it, so the browser can point at the field.
+ * - Submit buttons are disabled once a form is sent, to prevent double submits.
  * - Open <details data-dropdown> menus close on outside click or Escape.
  * - form[data-auto-submit] submits itself when one of its <select> filters changes.
  * - [data-select-badge] mirrors the checked radio option into the closed select's summary.
@@ -59,6 +62,42 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
         document.querySelectorAll('details[data-dropdown][open]').forEach((dropdown) => dropdown.removeAttribute('open'));
     }
+});
+
+document.querySelector('form[data-buka-ulang]')?.closest('dialog')?.showModal();
+
+document.addEventListener(
+    'invalid',
+    (event) => {
+        event.target.closest('details:not([open])')?.setAttribute('open', '');
+    },
+    true,
+);
+
+document.addEventListener('submit', (event) => {
+    if (event.defaultPrevented || event.target.method === 'dialog') {
+        return;
+    }
+
+    event.target.querySelectorAll('button[type="submit"]').forEach((button) => {
+        button.disabled = true;
+    });
+});
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        document.querySelectorAll('form button[type="submit"]:disabled').forEach((button) => {
+            button.disabled = false;
+        });
+    }
+});
+
+document.querySelectorAll('dialog').forEach((dialog) => {
+    dialog.addEventListener('close', () => {
+        dialog.querySelectorAll('form').forEach((form) => form.reset());
+        dialog.querySelectorAll('details[data-dropdown][open]').forEach((dropdown) => dropdown.removeAttribute('open'));
+        syncSelectDisplays();
+    });
 });
 
 document.querySelectorAll('[data-select-badge]').forEach((select) => {

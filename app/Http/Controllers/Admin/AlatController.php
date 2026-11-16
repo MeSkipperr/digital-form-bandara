@@ -6,14 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAlatRequest;
 use App\Http\Requests\UpdateAlatRequest;
 use App\Models\Alat;
+use App\Models\FormAlat;
 use App\Models\KategoriAlat;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AlatController extends Controller
 {
+    /**
+     * Assigned forms shown on the detail page before "Lihat Semua Form".
+     */
+    protected const JUMLAH_PRATINJAU_FORM = 4;
+
     public function index(Request $request): View
     {
         $kataKunci = trim((string) $request->query('cari'));
@@ -22,6 +29,7 @@ class AlatController extends Controller
 
         $daftarAlat = Alat::query()
             ->with('kategoriAlat')
+            ->withCount(['riwayatPengecekan as riwayat_tercatat_count' => fn ($query) => $query->tercatat()])
             ->when($kataKunci !== '', function ($query) use ($kataKunci): void {
                 $query->where(function ($query) use ($kataKunci): void {
                     $query->where('id', 'like', "%{$kataKunci}%")
@@ -44,15 +52,21 @@ class AlatController extends Controller
         ]);
     }
 
+    /**
+     * Detail page with a preview of the first assigned forms; "Lihat Semua Form" opens the full Kelola Form page.
+     */
     public function show(Alat $alat): View
     {
-        $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-
         return view('admin.alat.show', [
             'alat' => $alat->load('kategoriAlat'),
             'daftarKategori' => $this->daftarKategori(),
             'daftarStatus' => Alat::DAFTAR_STATUS,
-            'daftarForm' => $contoh['form'],
+            'daftarFormAlat' => $alat->formAlat()
+                ->with('templateForm')
+                ->get()
+                ->sortBy('templateForm.nama')
+                ->take(self::JUMLAH_PRATINJAU_FORM)
+                ->values(),
         ]);
     }
 
@@ -70,29 +84,23 @@ class AlatController extends Controller
         return back()->with('status', 'Alat berhasil diperbarui.');
     }
 
+    /**
+     * Delete the alat with its assigned forms and their pending riwayat. Riwayat an officer already filled stays as
+     * history, so such an alat cannot be deleted.
+     */
     public function destroy(Alat $alat): RedirectResponse
     {
-        $alat->delete();
+        if ($alat->riwayatPengecekan()->tercatat()->exists()) {
+            return redirect()->route('admin.alat.index')
+                ->withErrors(['alat' => "Alat {$alat->id} sudah memiliki riwayat pengecekan sehingga tidak dapat dihapus."]);
+        }
+
+        DB::transaction(function () use ($alat): void {
+            $alat->formAlat->each(fn (FormAlat $formAlat) => $formAlat->hapusBesertaRiwayatTertunda());
+            $alat->delete();
+        });
 
         return redirect()->route('admin.alat.index')->with('status', 'Alat berhasil dihapus.');
-    }
-
-    public function formIndex(Alat $alat): View
-    {
-        $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-
-        return view('admin.alat.form', ['alat' => $alat, 'daftarForm' => $contoh['form']]);
-    }
-
-    public function task(Alat $alat, int $form): View
-    {
-        $contoh = require resource_path('views/admin/alat/partials/contoh-data.php');
-
-        return view('admin.alat.task', [
-            'alat' => $alat,
-            'form' => $contoh['form'][$form] ?? abort(404),
-            'daftarTask' => $contoh['task'],
-        ]);
     }
 
     /**
