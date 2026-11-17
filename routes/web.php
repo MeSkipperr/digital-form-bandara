@@ -8,10 +8,19 @@ use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\RiwayatPengecekanController;
 use App\Http\Controllers\Admin\TemplateFormController;
 use App\Http\Controllers\Admin\TugasController;
+use App\Http\Controllers\PetugasController;
+use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+// Halaman Login
+Route::get('/', [LoginController::class, 'showLogin'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// Rute Petugas
+Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function () {
+    Route::get('/scan', [PetugasController::class, 'scan'])->name('scan');
+    Route::get('/cek/{kode_alat}', [PetugasController::class, 'cekAlat'])->name('cek');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
