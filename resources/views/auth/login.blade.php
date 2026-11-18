@@ -45,12 +45,12 @@
                 <div>
                     <label class="block text-xs font-semibold text-[#12345A] mb-1.5">Nama Pengguna</label>
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                            <i class="fa-solid fa-user text-sm"></i>
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fa-regular fa-user text-sm"></i>
                         </span>
-                        <input type="text" name="nama" value="{{ old('nama') }}" required autofocus
+                        <input type="text" name="id" value="{{ old('id') }}" required
                             placeholder="Masukan Nama Pengguna"
-                            class="w-full pl-11 pr-4 py-3 text-sm rounded-xl bg-[#F3F6FA] border border-slate-200 focus:bg-white focus:outline-none focus:border-[#19A7A0] transition">
+                            class="w-full pl-10 pr-4 py-3 text-xs rounded-xl bg-white border border-slate-200 text-[#1F2937] placeholder-slate-400 focus:outline-none focus:border-[#19A7A0] transition">
                     </div>
                 </div>
 

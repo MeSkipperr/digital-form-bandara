@@ -17,15 +17,15 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'nama'     => ['required', 'string'],
+            'id'       => ['required', 'string'],
             'password' => ['required', 'string'],
         ], [
-            'nama.required'     => 'Nama pengguna wajib diisi.',
+            'id.required'       => 'Nama pengguna wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 
-        // 1. Cari user aktif berdasarkan nama
-        $pengguna = Pengguna::where('nama', $request->nama)
+        // 1. Cari user aktif berdasarkan ID
+        $pengguna = Pengguna::where('id', $request->id)
             ->where('aktif', true)
             ->first();
 
@@ -42,8 +42,8 @@ class LoginController extends Controller
         }
 
         return back()->withErrors([
-            'nama' => 'Nama pengguna salah, kata sandi tidak cocok, atau akun nonaktif.',
-        ])->onlyInput('nama');
+            'id' => 'Nama pengguna salah, kata sandi tidak cocok, atau akun nonaktif.',
+        ])->onlyInput('id');
     }
 
     public function logout(Request $request)
