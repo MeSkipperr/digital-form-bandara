@@ -21,6 +21,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function () {
     Route::get('/scan', [PetugasController::class, 'scan'])->name('scan');
     Route::get('/cek/{kode_alat}', [PetugasController::class, 'cekAlat'])->name('cek');
+    Route::get('/form/{formAlat}', [PetugasController::class, 'tampilForm'])->name('form');
+    Route::post('/form/{formAlat}', [PetugasController::class, 'simpanForm'])->name('simpan');
 });
 
 Route::prefix('admin')->name('admin.')->group(function () {
