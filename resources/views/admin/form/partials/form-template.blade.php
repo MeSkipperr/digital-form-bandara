@@ -22,6 +22,8 @@
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
     @if ($templateForm)
         data-nilai-asli="{{ json_encode(['nama' => $templateForm->nama, 'id_kategori_alat' => $templateForm->id_kategori_alat, 'hapus_gambar' => '0']) }}"
+    @else
+        data-nilai-awal="{{ json_encode(['nama' => '', 'id_kategori_alat' => $kategoriAktif ?? '', 'hapus_gambar' => '0']) }}"
     @endif
 >
     @csrf

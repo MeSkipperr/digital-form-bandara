@@ -21,6 +21,8 @@
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
     @if ($alat)
         data-nilai-asli="{{ json_encode(['id' => $alat->id, 'id_kategori_alat' => $alat->id_kategori_alat, 'model' => $alat->model, 'lokasi' => $alat->lokasi]) }}"
+    @else
+        data-nilai-awal="{{ json_encode(['id' => '', 'id_kategori_alat' => '', 'model' => '', 'lokasi' => '']) }}"
     @endif
 >
     @csrf
@@ -61,7 +63,7 @@
             'kategoriTerpilih' => $formAktif ? old('id_kategori_alat') : $alat?->id_kategori_alat,
         ])
         @if ($pesan = $galat('id_kategori_alat'))
-            <p class="mt-1.5 text-xs text-danger">{{ $pesan }}</p>
+            <p class="mt-1.5 text-xs text-danger" data-galat>{{ $pesan }}</p>
         @endif
     </div>
 

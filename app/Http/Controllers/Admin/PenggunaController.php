@@ -9,6 +9,7 @@ use App\Models\Pengguna;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PenggunaController extends Controller
 {
@@ -43,16 +44,25 @@ class PenggunaController extends Controller
         return back()->with('status', 'Pengguna berhasil ditambahkan.');
     }
 
+    /**
+     * Update the pengguna. The login session stores the username, so a pengguna renaming their own account is logged
+     * in again under the new username instead of being logged out.
+     */
     public function update(UpdatePenggunaRequest $request, Pengguna $pengguna): RedirectResponse
     {
         $data = $request->safe()->except('kata_sandi');
         $kataSandi = $request->validated('kata_sandi');
+        $isPenggunaYangMasuk = Auth::id() === $pengguna->id;
 
         if (filled($kataSandi)) {
             $data['kata_sandi_hash'] = Pengguna::hashKataSandi($kataSandi);
         }
 
         $pengguna->update($data);
+
+        if ($isPenggunaYangMasuk) {
+            Auth::login($pengguna);
+        }
 
         return back()->with('status', 'Pengguna berhasil diperbarui.');
     }

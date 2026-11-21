@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Pengguna;
+use App\Models\RiwayatPengecekan;
+use App\Models\SesiPengguna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -83,20 +85,64 @@ class PenggunaControllerTest extends TestCase
         $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
         $hashLama = $pengguna->kata_sandi_hash;
 
-        $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'diganti001', 'nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '0', 'kata_sandi' => ''])
-            ->assertRedirect();
+        $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'yoga001', 'nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '0', 'kata_sandi' => ''])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $pengguna->refresh();
-        $this->assertSame('yoga001', $pengguna->id);
         $this->assertSame('Nama Baru', $pengguna->nama);
         $this->assertSame('admin', $pengguna->peran);
         $this->assertFalse($pengguna->aktif);
         $this->assertSame($hashLama, $pengguna->kata_sandi_hash);
 
-        $this->put(route('admin.pengguna.update', $pengguna), ['nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '1', 'kata_sandi' => 'sandibaru123'])
+        $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'yoga001', 'nama' => 'Nama Baru', 'peran' => 'admin', 'aktif' => '1', 'kata_sandi' => 'sandibaru123'])
             ->assertRedirect();
 
         $this->assertTrue(Hash::check('sandibaru123', $pengguna->fresh()->kata_sandi_hash));
+    }
+
+    public function test_update_changes_the_username_and_moves_the_riwayat_and_sesi_to_it(): void
+    {
+        $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
+        $riwayat = RiwayatPengecekan::factory()->for($pengguna)->bagus()->create();
+        $sesi = SesiPengguna::factory()->for($pengguna)->create();
+
+        $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'yoga999', 'nama' => $pengguna->nama, 'peran' => $pengguna->peran, 'aktif' => '1'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('pengguna', ['id' => 'yoga001']);
+        $this->assertDatabaseHas('pengguna', ['id' => 'yoga999']);
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_pengguna' => 'yoga999']);
+        $this->assertDatabaseHas('sesi_pengguna', ['token' => $sesi->token, 'id_pengguna' => 'yoga999']);
+    }
+
+    public function test_update_rejects_a_username_used_by_another_pengguna_and_reopens_its_modal(): void
+    {
+        $pengguna = Pengguna::factory()->create(['id' => 'yoga001', 'nama' => 'Nama Lama']);
+        Pengguna::factory()->create(['id' => 'ada001']);
+
+        $this->from(route('admin.pengguna.index'))
+            ->followingRedirects()
+            ->put(route('admin.pengguna.update', $pengguna), ['_form' => 'ubah-pengguna-yoga001', 'id' => 'ada001', 'nama' => 'Nama Diketik', 'peran' => 'petugas', 'aktif' => '1'])
+            ->assertOk()
+            ->assertSee('data-buka-ulang', false)
+            ->assertSee('value="ada001"', false)
+            ->assertSeeText('Username ini sudah dipakai.')
+            ->assertDontSee('role="alert"', false);
+
+        $this->assertDatabaseHas('pengguna', ['id' => 'yoga001', 'nama' => 'Nama Lama']);
+    }
+
+    public function test_renaming_the_logged_in_pengguna_keeps_them_logged_in(): void
+    {
+        $admin = Pengguna::factory()->create(['id' => 'admin001', 'peran' => 'admin']);
+
+        $this->actingAs($admin)
+            ->put(route('admin.pengguna.update', $admin), ['id' => 'admin002', 'nama' => $admin->nama, 'peran' => 'admin', 'aktif' => '1'])
+            ->assertRedirect();
+
+        $this->assertAuthenticatedAs(Pengguna::find('admin002'));
     }
 
     public function test_store_hashes_the_password_with_the_hash_password_key(): void
@@ -122,8 +168,9 @@ class PenggunaControllerTest extends TestCase
         config(['hashing.password_key' => 'kunci-uji']);
         $pengguna = Pengguna::factory()->create();
 
-        $this->put(route('admin.pengguna.update', $pengguna), ['nama' => 'Nama Baru', 'peran' => 'petugas', 'aktif' => '1', 'kata_sandi' => 'sandibaru123'])
-            ->assertRedirect();
+        $this->put(route('admin.pengguna.update', $pengguna), ['id' => $pengguna->id, 'nama' => 'Nama Baru', 'peran' => 'petugas', 'aktif' => '1', 'kata_sandi' => 'sandibaru123'])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
 
         $this->assertTrue($pengguna->fresh()->cocokKataSandi('sandibaru123'));
     }

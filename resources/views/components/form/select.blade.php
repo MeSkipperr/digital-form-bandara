@@ -9,8 +9,7 @@
         <select
             {{ $attributes->class([
                 'h-10 w-full appearance-none rounded-lg border pr-10 pl-3.5 text-sm text-ink outline-none',
-                'border-line focus:border-primary' => ! $error,
-                'border-danger' => $error,
+                'border-line focus:border-primary aria-invalid:border-danger aria-invalid:focus:border-danger',
                 $surface,
             ]) }}
             @if ($error) aria-invalid="true" @endif
@@ -22,6 +21,6 @@
         <x-icon name="chevron-bawah" class="pointer-events-none absolute top-1/2 right-3.5 size-4.5 -translate-y-1/2 text-muted" />
     </span>
     @if ($error)
-        <span class="mt-1.5 block text-xs text-danger">{{ $error }}</span>
+        <span class="mt-1.5 block text-xs text-danger" data-galat>{{ $error }}</span>
     @endif
 </label>

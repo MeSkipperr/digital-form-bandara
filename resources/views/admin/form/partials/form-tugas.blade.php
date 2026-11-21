@@ -19,6 +19,8 @@
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
     @if ($tugas)
         data-nilai-asli="{{ json_encode(['nama' => $tugas->nama]) }}"
+    @else
+        data-nilai-awal="{{ json_encode(['nama' => '']) }}"
     @endif
 >
     @csrf

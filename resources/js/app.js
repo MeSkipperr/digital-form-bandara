@@ -3,7 +3,8 @@
  *
  * - [data-modal-open="id"] opens the <dialog id="id"> as a modal.
  * - [data-modal-close] closes the closest open <dialog>.
- * - Clicking a dialog's backdrop closes it. Closing a dialog resets its forms, so "Batal" discards the typed input.
+ * - Clicking a dialog's backdrop closes it. Closing a dialog resets its forms to the saved values (data-nilai-asli)
+ *   or the Tambah defaults (data-nilai-awal) and removes their error messages, so "Batal" discards the typed input.
  * - A form[data-buka-ulang] (rendered after a validation error) reopens its dialog on page load.
  * - An invalid required field inside a closed <details> dropdown opens it, so the browser can point at the field.
  * - Submit buttons are disabled once a form is sent, to prevent double submits.
@@ -132,9 +133,40 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
+/**
+ * Puts the saved values (Ubah) or the empty defaults (Tambah) back into a form, also as its defaults, so a form
+ * reopened with the old input of a failed submit shows the current data again. Then removes every error message.
+ */
+const restoreForm = (form) => {
+    const values = JSON.parse(form.dataset.nilaiAsli ?? form.dataset.nilaiAwal ?? '{}');
+
+    Object.entries(values).forEach(([name, value]) => {
+        const text = String(value ?? '');
+
+        form.querySelectorAll(`[name="${name}"]`).forEach((field) => {
+            if (field.type === 'radio' || field.type === 'checkbox') {
+                field.checked = field.defaultChecked = field.value === text;
+            } else if (field instanceof HTMLSelectElement) {
+                [...field.options].forEach((option) => {
+                    option.selected = option.defaultSelected = option.value === text;
+                });
+            } else {
+                field.value = field.defaultValue = text;
+            }
+        });
+    });
+
+    form.querySelectorAll('[data-galat]').forEach((message) => message.remove());
+    form.querySelectorAll('[aria-invalid]').forEach((field) => field.removeAttribute('aria-invalid'));
+    form.removeAttribute('data-buka-ulang');
+};
+
 document.querySelectorAll('dialog').forEach((dialog) => {
     dialog.addEventListener('close', () => {
-        dialog.querySelectorAll('form').forEach((form) => form.reset());
+        dialog.querySelectorAll('form').forEach((form) => {
+            form.reset();
+            restoreForm(form);
+        });
         dialog.querySelectorAll('details[data-dropdown][open]').forEach((dropdown) => dropdown.removeAttribute('open'));
         syncSelectDisplays();
     });

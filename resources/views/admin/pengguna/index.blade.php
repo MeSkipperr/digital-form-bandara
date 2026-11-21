@@ -7,7 +7,7 @@
         </x-button>
     </form>
 
-    <x-alert-messages class="mt-4" />
+    <x-alert-messages class="mt-4" :form-dengan-galat-sendiri="['tambah-pengguna', 'ubah-pengguna-*']" />
 
     <x-card class="mt-4">
         <x-table-scroll>

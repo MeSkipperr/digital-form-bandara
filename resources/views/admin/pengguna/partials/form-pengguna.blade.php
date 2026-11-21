@@ -1,6 +1,6 @@
 {{--
     Tambah / Ubah Pengguna form from the "02c-modal-edit-pengguna" design, without the email field.
-    The username is the primary key referenced by riwayat and sesi, so it is read-only when editing.
+    The username is the primary key referenced by riwayat and sesi; changing it cascades to them.
     The hidden `_form` key tells which modal was submitted: after a validation error only that form gets the old
     input and the error messages, and app.js reopens its modal ([data-buka-ulang]). The password is never refilled.
 
@@ -21,6 +21,8 @@
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
     @if ($pengguna)
         data-nilai-asli="{{ json_encode(['nama' => $pengguna->nama, 'id' => $pengguna->id, 'kata_sandi' => '', 'peran' => $pengguna->peran, 'aktif' => (int) $pengguna->aktif]) }}"
+    @else
+        data-nilai-awal="{{ json_encode(['nama' => '', 'id' => '', 'kata_sandi' => '', 'peran' => array_key_first($daftarPeran), 'aktif' => 1]) }}"
     @endif
 >
     @csrf
@@ -44,7 +46,7 @@
         <x-form.input
             label="Username"
             name="id"
-            :value="$pengguna?->id ?? ($formAktif ? old('id') : null)"
+            :value="$formAktif ? old('id') : $pengguna?->id"
             :error="$galat('id')"
             placeholder="yoga001"
             maxlength="20"
@@ -52,7 +54,6 @@
             title="Huruf, angka, tanda - dan _ tanpa spasi"
             autocomplete="off"
             required
-            :readonly="$pengguna !== null"
         />
         <x-form.input
             :label="$pengguna ? 'Kata Sandi Baru' : 'Kata Sandi'"
