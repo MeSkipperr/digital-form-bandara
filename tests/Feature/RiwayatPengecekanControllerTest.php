@@ -7,7 +7,6 @@ use App\Models\FormAlat;
 use App\Models\KategoriAlat;
 use App\Models\Pengguna;
 use App\Models\RiwayatPengecekan;
-use App\Models\SesiPengguna;
 use App\Models\TemplateForm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -96,12 +95,10 @@ class RiwayatPengecekanControllerTest extends TestCase
     public function test_riwayat_and_form_alat_stay_when_the_pengguna_is_deleted(): void
     {
         $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
-        $sesi = SesiPengguna::factory()->for($pengguna, 'pengguna')->create();
         $riwayat = RiwayatPengecekan::factory()->for($pengguna, 'pengguna')->bagus()->create();
 
         $pengguna->delete();
 
-        $this->assertModelMissing($sesi);
         $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_pengguna' => null]);
         $this->get(route('admin.riwayat.index'))->assertOk()->assertDontSeeText('yoga001');
     }

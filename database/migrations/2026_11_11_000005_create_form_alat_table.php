@@ -7,16 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Deleting an alat or template form keeps the form_alat with a null relation, so riwayat pengecekan stays as
+     * history. The alat id can be renamed, so it cascades on update.
      */
     public function up(): void
     {
         Schema::create('form_alat', function (Blueprint $table) {
             $table->id();
-            $table->string('id_alat', 20);
-            $table->foreignId('id_template_form')->constrained('template_form', indexName: 'fk_form_alat_template_form');
+            $table->string('id_alat', 20)->nullable();
+            $table->foreignId('id_template_form')->nullable()->constrained('template_form', indexName: 'fk_form_alat_template_form')->nullOnDelete();
 
-            $table->foreign('id_alat', 'fk_form_alat_alat')->references('id')->on('alat');
+            $table->foreign('id_alat', 'fk_form_alat_alat')->references('id')->on('alat')->cascadeOnUpdate()->nullOnDelete();
             $table->unique(['id_alat', 'id_template_form'], 'uq_alat_template_form');
         });
     }

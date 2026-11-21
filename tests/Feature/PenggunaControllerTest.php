@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Pengguna;
 use App\Models\RiwayatPengecekan;
-use App\Models\SesiPengguna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -101,11 +100,10 @@ class PenggunaControllerTest extends TestCase
         $this->assertTrue(Hash::check('sandibaru123', $pengguna->fresh()->kata_sandi_hash));
     }
 
-    public function test_update_changes_the_username_and_moves_the_riwayat_and_sesi_to_it(): void
+    public function test_update_changes_the_username_and_moves_the_riwayat_to_it(): void
     {
         $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
         $riwayat = RiwayatPengecekan::factory()->for($pengguna)->bagus()->create();
-        $sesi = SesiPengguna::factory()->for($pengguna)->create();
 
         $this->put(route('admin.pengguna.update', $pengguna), ['id' => 'yoga999', 'nama' => $pengguna->nama, 'peran' => $pengguna->peran, 'aktif' => '1'])
             ->assertRedirect()
@@ -114,7 +112,6 @@ class PenggunaControllerTest extends TestCase
         $this->assertDatabaseMissing('pengguna', ['id' => 'yoga001']);
         $this->assertDatabaseHas('pengguna', ['id' => 'yoga999']);
         $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_pengguna' => 'yoga999']);
-        $this->assertDatabaseHas('sesi_pengguna', ['token' => $sesi->token, 'id_pengguna' => 'yoga999']);
     }
 
     public function test_update_rejects_a_username_used_by_another_pengguna_and_reopens_its_modal(): void

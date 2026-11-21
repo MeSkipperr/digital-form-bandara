@@ -1,6 +1,6 @@
 {{--
     Tambah / Ubah Pengguna form from the "02c-modal-edit-pengguna" design, without the email field.
-    The username is the primary key referenced by riwayat and sesi; changing it cascades to them.
+    The username is the primary key referenced by riwayat; changing it cascades to it.
     The hidden `_form` key tells which modal was submitted: after a validation error only that form gets the old
     input and the error messages, and app.js reopens its modal ([data-buka-ulang]). The password is never refilled.
 

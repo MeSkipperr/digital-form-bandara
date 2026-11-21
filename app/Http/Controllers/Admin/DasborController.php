@@ -129,7 +129,7 @@ class DasborController extends Controller
     }
 
     /**
-     * Active users that have an unexpired session.
+     * Users whose account is active.
      *
      * @return Collection<int, Pengguna>
      */
@@ -137,7 +137,6 @@ class DasborController extends Controller
     {
         return Pengguna::query()
             ->where('aktif', true)
-            ->whereHas('sesiPengguna', fn ($query) => $query->where('aktif_sampai', '>', now()))
             ->orderBy('nama')
             ->limit(5)
             ->get();

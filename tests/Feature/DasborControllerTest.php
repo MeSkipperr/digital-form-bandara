@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Alat;
 use App\Models\Pengguna;
 use App\Models\RiwayatPengecekan;
-use App\Models\SesiPengguna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -87,19 +86,13 @@ class DasborControllerTest extends TestCase
         $this->assertSame(4, array_sum(array_column($tigaPuluhHari, 'value')));
     }
 
-    public function test_pengguna_aktif_lists_only_active_users_with_a_live_session(): void
+    public function test_pengguna_aktif_lists_only_active_users(): void
     {
-        $daring = Pengguna::factory()->create(['id' => 'yoga001', 'nama' => 'Yoga Pratama']);
-        $kedaluwarsa = Pengguna::factory()->create(['nama' => 'Sesi Kedaluwarsa']);
-        $nonaktif = Pengguna::factory()->nonaktif()->create(['nama' => 'Pengguna Nonaktif']);
-        Pengguna::factory()->create(['nama' => 'Tanpa Sesi']);
-
-        SesiPengguna::factory()->for($daring, 'pengguna')->create(['aktif_sampai' => now()->addHour()]);
-        SesiPengguna::factory()->for($kedaluwarsa, 'pengguna')->create(['aktif_sampai' => now()->subHour()]);
-        SesiPengguna::factory()->for($nonaktif, 'pengguna')->create(['aktif_sampai' => now()->addHour()]);
+        Pengguna::factory()->create(['id' => 'yoga001', 'nama' => 'Yoga Pratama']);
+        Pengguna::factory()->nonaktif()->create(['nama' => 'Pengguna Nonaktif']);
 
         $this->get(route('admin.dasbor'))
             ->assertSeeText(['Yoga Pratama', '@yoga001', 'Aktif'])
-            ->assertDontSeeText(['Sesi Kedaluwarsa', 'Pengguna Nonaktif', 'Tanpa Sesi']);
+            ->assertDontSeeText('Pengguna Nonaktif');
     }
 }
