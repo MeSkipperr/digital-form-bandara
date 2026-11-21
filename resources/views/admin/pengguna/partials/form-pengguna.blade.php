@@ -19,6 +19,9 @@
     action="{{ $pengguna ? route('admin.pengguna.update', $pengguna) : route('admin.pengguna.store') }}"
     class="flex flex-col gap-4"
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
+    @if ($pengguna)
+        data-nilai-asli="{{ json_encode(['nama' => $pengguna->nama, 'id' => $pengguna->id, 'kata_sandi' => '', 'peran' => $pengguna->peran, 'aktif' => (int) $pengguna->aktif]) }}"
+    @endif
 >
     @csrf
     @if ($pengguna)

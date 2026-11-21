@@ -19,6 +19,9 @@
     action="{{ $alat ? route('admin.alat.update', $alat) : route('admin.alat.store') }}"
     class="flex flex-col gap-4"
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
+    @if ($alat)
+        data-nilai-asli="{{ json_encode(['id' => $alat->id, 'id_kategori_alat' => $alat->id_kategori_alat, 'model' => $alat->model, 'lokasi' => $alat->lokasi]) }}"
+    @endif
 >
     @csrf
     @if ($alat)
@@ -30,7 +33,7 @@
         <x-form.input
             label="ID Alat"
             name="id"
-            :value="$alat?->id ?? ($formAktif ? old('id') : null)"
+            :value="$formAktif ? old('id') : $alat?->id"
             :error="$galat('id')"
             placeholder="XRAY-07"
             maxlength="20"
@@ -39,7 +42,6 @@
             autocomplete="off"
             mono
             required
-            :readonly="$alat !== null"
         />
         <x-form.input
             label="Model"

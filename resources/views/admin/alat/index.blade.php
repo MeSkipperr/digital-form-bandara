@@ -14,7 +14,7 @@
         </x-button>
     </form>
 
-    <x-alert-messages class="mt-4" />
+    <x-alert-messages class="mt-4" :form-dengan-galat-sendiri="['tambah-alat', 'ubah-alat-*']" />
 
     <x-card class="mt-5">
         <x-table-scroll>
@@ -69,14 +69,14 @@
             </x-modal>
             <x-modal id="modal-hapus-alat-{{ $alat->id }}" title="Hapus Alat" description="Alat {{ $alat->id }} akan dihapus permanen.">
                 @if ($alat->riwayat_tercatat_count > 0)
-                    <x-danger-alert>Alat {{ $alat->id }} sudah memiliki {{ $alat->riwayat_tercatat_count }} riwayat pengecekan, sehingga tidak dapat dihapus agar riwayatnya tetap tersimpan.</x-danger-alert>
+                    <x-danger-alert>Alat {{ $alat->id }} sudah memiliki {{ $alat->riwayat_tercatat_count }} riwayat pengecekan. Riwayat tetap tersimpan, tetapi data alatnya akan kosong.</x-danger-alert>
                 @endif
 
                 <form method="post" action="{{ route('admin.alat.destroy', $alat) }}" class="mt-4 flex items-center justify-end gap-3">
                     @csrf
                     @method('delete')
                     <x-button variant="secondary" class="w-25" data-modal-close>Batal</x-button>
-                    <x-button type="submit" variant="danger" class="w-30 disabled:cursor-not-allowed disabled:opacity-50" :disabled="$alat->riwayat_tercatat_count > 0">Hapus</x-button>
+                    <x-button type="submit" variant="danger" class="w-30">Hapus</x-button>
                 </form>
             </x-modal>
         @endforeach

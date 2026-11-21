@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Alat;
 use App\Models\FormAlat;
 use App\Models\KategoriAlat;
+use App\Models\RiwayatPengecekan;
 use App\Models\TemplateForm;
 use App\Models\Tugas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -164,19 +166,29 @@ class TemplateFormControllerTest extends TestCase
         Storage::disk('public')->assertMissing('template-form/hapus.png');
     }
 
-    public function test_destroy_refuses_a_form_still_used_by_alat(): void
+    public function test_destroy_unassigns_a_form_used_by_alat_and_keeps_its_filled_riwayat(): void
     {
         $form = TemplateForm::factory()->create(['nama' => 'Form Xray Atas']);
-        FormAlat::factory()->for($form, 'templateForm')->create();
+        $alat = Alat::factory()->create();
+        $formAlatTercatat = FormAlat::factory()->for($alat)->for($form, 'templateForm')->create();
+        $riwayat = RiwayatPengecekan::factory()->for($formAlatTercatat)->bagus()->create();
+        $riwayatTertunda = RiwayatPengecekan::factory()->for($formAlatTercatat)->tertunda()->create();
+        $formAlatKosong = FormAlat::factory()->for($form, 'templateForm')->create();
 
         $this->get(route('admin.form.index'))
-            ->assertSeeText('Form Xray Atas masih dipakai 1 alat.');
+            ->assertSeeText('Form Xray Atas masih dipakai 2 alat dan akan dilepas dari alat tersebut.');
 
         $this->delete(route('admin.form.destroy', $form))
             ->assertRedirect(route('admin.form.index'))
-            ->assertSessionHasErrors('form');
+            ->assertSessionHas('status', 'Form berhasil dihapus.');
 
-        $this->assertModelExists($form);
+        $this->assertModelMissing($form);
+        $this->assertModelMissing($formAlatKosong);
+        $this->assertModelMissing($riwayatTertunda);
+        $this->assertModelExists($alat);
+        $this->assertDatabaseHas('form_alat', ['id' => $formAlatTercatat->id, 'id_alat' => $alat->id, 'id_template_form' => null]);
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_form_alat' => $formAlatTercatat->id]);
+        $this->assertCount(0, $alat->formAlat);
     }
 
     public function test_sidebar_form_menu_links_to_the_form_page(): void

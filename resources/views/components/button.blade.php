@@ -1,6 +1,6 @@
 {{--
     Buttons from the design system: primary (blue), secondary (white outline) and danger (red).
-    Renders an <a> when href is given, otherwise a <button>.
+    Renders an <a> when href is given, otherwise a <button>, which fades out while disabled.
 --}}
 @props([
     'variant' => 'primary',
@@ -21,7 +21,7 @@
         {{ $slot }}
     </a>
 @else
-    <button type="{{ $type }}" {{ $attributes->class(['inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm transition-colors', $classes]) }}>
+    <button type="{{ $type }}" {{ $attributes->class(['inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50', $classes]) }}>
         {{ $slot }}
     </button>
 @endif

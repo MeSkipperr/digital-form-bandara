@@ -49,10 +49,12 @@ class TemplateForm extends Model
     }
 
     /**
+     * Alat this form is assigned to. A row whose alat was deleted only remains to keep its riwayat, so it is left out.
+     *
      * @return HasMany<FormAlat, $this>
      */
     public function formAlat(): HasMany
     {
-        return $this->hasMany(FormAlat::class, 'id_template_form');
+        return $this->hasMany(FormAlat::class, 'id_template_form')->whereNotNull('id_alat');
     }
 }

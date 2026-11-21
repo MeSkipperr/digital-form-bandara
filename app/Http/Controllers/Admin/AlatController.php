@@ -77,26 +77,30 @@ class AlatController extends Controller
         return redirect()->route('admin.alat.show', $alat)->with('status', 'Alat berhasil ditambahkan.');
     }
 
+    /**
+     * Update the alat. When the ID changes, the detail page's old URL no longer exists, so it redirects to the new one.
+     */
     public function update(UpdateAlatRequest $request, Alat $alat): RedirectResponse
     {
+        $halamanDetailLama = route('admin.alat.show', $alat);
+
         $alat->update($request->validated());
+
+        if (url()->previous() === $halamanDetailLama) {
+            return redirect()->route('admin.alat.show', $alat)->with('status', 'Alat berhasil diperbarui.');
+        }
 
         return back()->with('status', 'Alat berhasil diperbarui.');
     }
 
     /**
      * Delete the alat with its assigned forms and their pending riwayat. Riwayat an officer already filled stays as
-     * history, so such an alat cannot be deleted.
+     * history: its alat becomes empty while its form remains.
      */
     public function destroy(Alat $alat): RedirectResponse
     {
-        if ($alat->riwayatPengecekan()->tercatat()->exists()) {
-            return redirect()->route('admin.alat.index')
-                ->withErrors(['alat' => "Alat {$alat->id} sudah memiliki riwayat pengecekan sehingga tidak dapat dihapus."]);
-        }
-
         DB::transaction(function () use ($alat): void {
-            $alat->formAlat->each(fn (FormAlat $formAlat) => $formAlat->hapusBesertaRiwayatTertunda());
+            $alat->formAlat->each(fn (FormAlat $formAlat) => $formAlat->lepasSebelumIndukDihapus());
             $alat->delete();
         });
 

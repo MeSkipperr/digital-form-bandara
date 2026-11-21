@@ -17,6 +17,9 @@
     action="{{ $tugas ? route('admin.form.tugas.update', [$templateForm, $tugas]) : route('admin.form.tugas.store', $templateForm) }}"
     class="flex flex-col gap-4"
     @if ($formAktif && $errors->any()) data-buka-ulang @endif
+    @if ($tugas)
+        data-nilai-asli="{{ json_encode(['nama' => $tugas->nama]) }}"
+    @endif
 >
     @csrf
     @if ($tugas)

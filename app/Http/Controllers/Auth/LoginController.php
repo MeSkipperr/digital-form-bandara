@@ -17,10 +17,10 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'id'       => ['required', 'string'],
+            'id' => ['required', 'string'],
             'password' => ['required', 'string'],
         ], [
-            'id.required'       => 'Nama pengguna wajib diisi.',
+            'id.required' => 'Nama pengguna wajib diisi.',
             'password.required' => 'Kata sandi wajib diisi.',
         ]);
 

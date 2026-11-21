@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTemplateFormRequest;
 use App\Http\Requests\UpdateTemplateFormRequest;
+use App\Models\FormAlat;
 use App\Models\KategoriAlat;
 use App\Models\TemplateForm;
 use Illuminate\Contracts\View\View;
@@ -80,16 +81,13 @@ class TemplateFormController extends Controller
     }
 
     /**
-     * Delete the form together with its tasks. A form still assigned to alat keeps its riwayat, so it cannot be deleted.
+     * Delete the form together with its tasks and unassign it from every alat. Riwayat an officer already filled stays
+     * as history: its form becomes empty while its alat remains.
      */
     public function destroy(TemplateForm $templateForm): RedirectResponse
     {
-        if ($templateForm->formAlat()->exists()) {
-            return redirect()->route('admin.form.index')
-                ->withErrors(['form' => "{$templateForm->nama} masih dipakai alat sehingga tidak dapat dihapus."]);
-        }
-
         DB::transaction(function () use ($templateForm): void {
+            $templateForm->formAlat->each(fn (FormAlat $formAlat) => $formAlat->lepasSebelumIndukDihapus());
             $templateForm->tugas()->delete();
             $templateForm->delete();
         });

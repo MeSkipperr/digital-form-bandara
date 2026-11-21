@@ -66,17 +66,16 @@
             </x-modal>
 
             <x-modal id="modal-hapus-form-{{ $form->id }}" title="Hapus Form" description="Tindakan ini tidak dapat dibatalkan.">
+                <x-danger-alert>{{ $form->nama }} akan dihapus beserta {{ $form->tugas_count }} task di dalamnya.</x-danger-alert>
                 @if ($form->form_alat_count > 0)
-                    <x-danger-alert>{{ $form->nama }} masih dipakai {{ $form->form_alat_count }} alat. Lepaskan form dari alat tersebut sebelum menghapusnya.</x-danger-alert>
-                @else
-                    <x-danger-alert>{{ $form->nama }} akan dihapus beserta {{ $form->tugas_count }} task di dalamnya.</x-danger-alert>
+                    <x-danger-alert class="mt-3">{{ $form->nama }} masih dipakai {{ $form->form_alat_count }} alat dan akan dilepas dari alat tersebut. Riwayat pengecekan tetap tersimpan, tetapi data formnya akan kosong.</x-danger-alert>
                 @endif
 
                 <form method="post" action="{{ route('admin.form.destroy', $form) }}" class="mt-8 flex items-center justify-end gap-3">
                     @csrf
                     @method('delete')
                     <x-button variant="secondary" class="w-25" data-modal-close>Batal</x-button>
-                    <x-button type="submit" variant="danger" class="w-33 disabled:cursor-not-allowed disabled:opacity-50" :disabled="$form->form_alat_count > 0">Hapus Form</x-button>
+                    <x-button type="submit" variant="danger" class="w-33">Hapus Form</x-button>
                 </form>
             </x-modal>
         @endforeach

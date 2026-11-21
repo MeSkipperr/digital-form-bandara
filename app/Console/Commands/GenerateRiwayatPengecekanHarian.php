@@ -34,6 +34,7 @@ class GenerateRiwayatPengecekanHarian extends Command
             $jumlahDibuat = 0;
 
             FormAlat::query()
+                ->terpasang()
                 ->select('id')
                 ->chunkById(self::UKURAN_CHUNK, function (Collection $daftarFormAlat) use (&$jumlahDibuat): void {
                     RiwayatPengecekan::query()->insert(

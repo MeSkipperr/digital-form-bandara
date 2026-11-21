@@ -103,7 +103,7 @@
                     @csrf
                     @method('delete')
                     <x-button variant="secondary" class="w-25" data-modal-close>Batal</x-button>
-                    <x-button type="submit" variant="danger" class="w-33 disabled:cursor-not-allowed disabled:opacity-50" :disabled="$formAlat->riwayat_tercatat_count > 0">Lepas Form</x-button>
+                    <x-button type="submit" variant="danger" class="w-33" :disabled="$formAlat->riwayat_tercatat_count > 0">Lepas Form</x-button>
                 </form>
             </x-modal>
         @endforeach

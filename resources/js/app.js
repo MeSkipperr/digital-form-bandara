@@ -7,6 +7,7 @@
  * - A form[data-buka-ulang] (rendered after a validation error) reopens its dialog on page load.
  * - An invalid required field inside a closed <details> dropdown opens it, so the browser can point at the field.
  * - Submit buttons are disabled once a form is sent, to prevent double submits.
+ * - In a form[data-nilai-asli] (an Ubah modal) the submit button stays disabled while the input equals the saved values.
  * - Open <details data-dropdown> menus close on outside click or Escape.
  * - form[data-auto-submit] submits itself when one of its <select> filters changes.
  * - [data-select-badge] mirrors the checked radio option into the closed select's summary.
@@ -88,11 +89,46 @@ document.addEventListener('submit', (event) => {
     });
 });
 
+/**
+ * Whether a form[data-nilai-asli] differs from its saved values (a JSON object of field name to value).
+ * Values are compared trimmed, like the server stores them, and a picked file always counts as a change.
+ */
+const hasUnsavedChanges = (form) => {
+    const savedValues = JSON.parse(form.dataset.nilaiAsli);
+    const currentValues = new FormData(form);
+    const pickedFile = [...currentValues.values()].some((value) => value instanceof File && value.name !== '');
+
+    return (
+        pickedFile ||
+        Object.entries(savedValues).some(
+            ([name, saved]) => String(currentValues.get(name) ?? '').trim() !== String(saved ?? '').trim(),
+        )
+    );
+};
+
+const syncSaveButtons = (form) => {
+    const isUnchanged = !hasUnsavedChanges(form);
+
+    form.querySelectorAll('button[type="submit"]').forEach((button) => {
+        button.disabled = isUnchanged;
+    });
+};
+
+const editForms = document.querySelectorAll('form[data-nilai-asli]');
+
+editForms.forEach((form) => {
+    form.addEventListener('input', () => syncSaveButtons(form));
+    form.addEventListener('change', () => syncSaveButtons(form));
+    form.addEventListener('reset', () => setTimeout(() => syncSaveButtons(form)));
+    syncSaveButtons(form);
+});
+
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
         document.querySelectorAll('form button[type="submit"]:disabled').forEach((button) => {
             button.disabled = false;
         });
+        editForms.forEach(syncSaveButtons);
     }
 });
 
@@ -400,6 +436,9 @@ document.querySelectorAll('[data-unggah-gambar]').forEach((field) => {
 
     const currentUrl = () => (removeFlag.value === '1' ? '' : originalUrl);
 
+    /** Values set from script fire no events, so the form's Simpan button state is refreshed by hand. */
+    const notifyForm = () => field.dispatchEvent(new Event('input', { bubbles: true }));
+
     const choose = (file) => {
         if (!file) {
             return;
@@ -439,6 +478,7 @@ document.querySelectorAll('[data-unggah-gambar]').forEach((field) => {
         event.preventDefault();
         delete dropZone.dataset.seret;
         choose(event.dataTransfer.files[0]);
+        notifyForm();
     });
 
     field.querySelector('[data-unggah-hapus-tombol]').addEventListener('click', () => {
@@ -446,6 +486,7 @@ document.querySelectorAll('[data-unggah-gambar]').forEach((field) => {
         removeFlag.value = originalUrl === '' ? '0' : '1';
         showUploadError('');
         showImage('');
+        notifyForm();
     });
 
     field.closest('dialog')?.addEventListener('close', () => {

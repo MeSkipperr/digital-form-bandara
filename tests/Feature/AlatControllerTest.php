@@ -143,23 +143,76 @@ class AlatControllerTest extends TestCase
             ->assertOk()
             ->assertSee('data-buka-ulang', false)
             ->assertSee('value="Model Diketik"', false)
-            ->assertSeeText(['ID alat ini sudah dipakai.', 'Kategori wajib dipilih.']);
+            ->assertSeeText(['ID alat ini sudah dipakai.', 'Kategori wajib dipilih.'])
+            ->assertDontSee('role="alert"', false);
     }
 
-    public function test_update_changes_fields_but_never_the_id(): void
+    public function test_ubah_modal_carries_the_saved_values_so_simpan_stays_disabled_until_something_changes(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro', 'lokasi' => null]);
+        $nilaiAsli = json_encode(['id' => 'XRAY-01', 'id_kategori_alat' => $alat->id_kategori_alat, 'model' => 'Xray Pro', 'lokasi' => null]);
+
+        $this->get(route('admin.alat.show', $alat))
+            ->assertOk()
+            ->assertSee('data-nilai-asli="'.e($nilaiAsli).'"', false);
+
+        $halamanDaftar = $this->get(route('admin.alat.index'))
+            ->assertOk()
+            ->assertSee('data-nilai-asli="'.e($nilaiAsli).'"', false);
+
+        $this->assertSame(1, substr_count($halamanDaftar->getContent(), 'data-nilai-asli'), 'Only the Ubah form compares against saved values, not Tambah.');
+    }
+
+    public function test_update_keeping_the_same_id_changes_the_other_fields(): void
     {
         $alat = Alat::factory()->create(['id' => 'XRAY-01']);
         $kategori = KategoriAlat::factory()->create();
 
-        $this->put(route('admin.alat.update', $alat), [
-            'id' => 'HACK-01',
+        $this->from(route('admin.alat.index'))->put(route('admin.alat.update', $alat), [
+            'id' => 'XRAY-01',
             'id_kategori_alat' => $kategori->id,
             'model' => 'Baru',
             'lokasi' => 'Lokasi Baru',
-        ])->assertRedirect();
+        ])->assertRedirect(route('admin.alat.index'))->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('alat', ['id' => 'XRAY-01', 'model' => 'Baru', 'lokasi' => 'Lokasi Baru']);
-        $this->assertDatabaseMissing('alat', ['id' => 'HACK-01']);
+    }
+
+    public function test_update_changes_the_id_and_moves_the_assigned_forms_to_it(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01']);
+        $formAlat = FormAlat::factory()->for($alat)->create();
+
+        $this->from(route('admin.alat.show', $alat))->put(route('admin.alat.update', $alat), [
+            'id' => 'XRAY-99',
+            'id_kategori_alat' => $alat->id_kategori_alat,
+        ])->assertRedirect(route('admin.alat.show', 'XRAY-99'))->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('alat', ['id' => 'XRAY-01']);
+        $this->assertDatabaseHas('alat', ['id' => 'XRAY-99']);
+        $this->assertDatabaseHas('form_alat', ['id' => $formAlat->id, 'id_alat' => 'XRAY-99']);
+    }
+
+    public function test_update_rejects_an_id_used_by_another_alat_and_reopens_its_modal(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01', 'model' => 'Model Lama']);
+        Alat::factory()->create(['id' => 'XRAY-02']);
+
+        $this->from(route('admin.alat.show', $alat))
+            ->followingRedirects()
+            ->put(route('admin.alat.update', $alat), [
+                '_form' => 'ubah-alat-XRAY-01',
+                'id' => 'XRAY-02',
+                'id_kategori_alat' => $alat->id_kategori_alat,
+                'model' => 'Model Diketik',
+            ])
+            ->assertOk()
+            ->assertSee('data-buka-ulang', false)
+            ->assertSee('value="XRAY-02"', false)
+            ->assertSeeText('ID alat ini sudah dipakai.')
+            ->assertDontSee('role="alert"', false);
+
+        $this->assertDatabaseHas('alat', ['id' => 'XRAY-01', 'model' => 'Model Lama']);
     }
 
     public function test_destroy_deletes_alat_with_its_forms_and_pending_riwayat(): void
@@ -177,27 +230,33 @@ class AlatControllerTest extends TestCase
         $this->assertModelMissing($riwayatTertunda);
     }
 
-    public function test_destroy_refuses_alat_with_filled_riwayat(): void
+    public function test_destroy_keeps_filled_riwayat_with_an_empty_alat_and_the_form_still_there(): void
     {
         $alat = Alat::factory()->create(['id' => 'XRAY-01']);
-        $riwayat = RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat))->bagus()->create();
+        $template = TemplateForm::factory()->create();
+        $formAlat = FormAlat::factory()->for($alat)->for($template, 'templateForm')->create();
+        $riwayat = RiwayatPengecekan::factory()->for($formAlat)->bagus()->create();
+        $riwayatTertunda = RiwayatPengecekan::factory()->for($formAlat)->tertunda()->create();
 
         $this->delete(route('admin.alat.destroy', $alat))
             ->assertRedirect(route('admin.alat.index'))
-            ->assertSessionHasErrors(['alat' => 'Alat XRAY-01 sudah memiliki riwayat pengecekan sehingga tidak dapat dihapus.']);
+            ->assertSessionHas('status', 'Alat berhasil dihapus.');
 
-        $this->assertModelExists($alat);
-        $this->assertModelExists($riwayat);
+        $this->assertModelMissing($alat);
+        $this->assertModelMissing($riwayatTertunda);
+        $this->assertModelExists($template);
+        $this->assertDatabaseHas('form_alat', ['id' => $formAlat->id, 'id_alat' => null, 'id_template_form' => $template->id]);
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_form_alat' => $formAlat->id]);
     }
 
-    public function test_hapus_modal_warns_about_alat_with_filled_riwayat(): void
+    public function test_hapus_modal_tells_that_filled_riwayat_is_kept(): void
     {
         $alat = Alat::factory()->create(['id' => 'XRAY-01']);
         RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat))->kurangBagus()->create();
 
         $this->get(route('admin.alat.index'))
             ->assertOk()
-            ->assertSeeText('Alat XRAY-01 sudah memiliki 1 riwayat pengecekan');
+            ->assertSeeText('Alat XRAY-01 sudah memiliki 1 riwayat pengecekan. Riwayat tetap tersimpan, tetapi data alatnya akan kosong.');
     }
 
     public function test_tambah_modal_posts_a_new_alat_even_when_the_table_has_rows(): void

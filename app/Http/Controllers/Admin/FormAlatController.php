@@ -55,7 +55,7 @@ class FormAlatController extends Controller
      */
     public function show(Alat $alat, FormAlat $formAlat): View
     {
-        abort_unless($formAlat->id_alat === $alat->id, 404);
+        abort_unless($formAlat->masihTerpasang() && $formAlat->id_alat === $alat->id, 404);
 
         $templateForm = $formAlat->templateForm;
 
@@ -71,7 +71,7 @@ class FormAlatController extends Controller
      */
     public function destroy(Alat $alat, FormAlat $formAlat): RedirectResponse
     {
-        abort_unless($formAlat->id_alat === $alat->id, 404);
+        abort_unless($formAlat->masihTerpasang() && $formAlat->id_alat === $alat->id, 404);
 
         $namaForm = $formAlat->templateForm->nama;
 

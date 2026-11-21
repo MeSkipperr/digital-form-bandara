@@ -7,6 +7,7 @@ use App\Models\FormAlat;
 use App\Models\KategoriAlat;
 use App\Models\Pengguna;
 use App\Models\RiwayatPengecekan;
+use App\Models\SesiPengguna;
 use App\Models\TemplateForm;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -60,6 +61,59 @@ class RiwayatPengecekanControllerTest extends TestCase
         RiwayatPengecekan::factory()->tertunda()->create();
 
         $this->get(route('admin.riwayat.index'))->assertOk()->assertSeeText('Tertunda');
+    }
+
+    public function test_riwayat_keeps_its_form_when_the_alat_is_deleted(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01', 'model' => 'Xray Pro Max']);
+        $template = TemplateForm::factory()->create(['nama' => 'Form Xray Atas']);
+        $riwayat = RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat)->for($template, 'templateForm'), 'formAlat')->bagus()->create();
+
+        $alat->delete();
+
+        $this->assertNull($riwayat->fresh()->formAlat->alat);
+        $this->get(route('admin.riwayat.index'))
+            ->assertOk()
+            ->assertSeeText('Form Xray Atas')
+            ->assertDontSeeText(['XRAY-01', 'Xray Pro Max', 'Lihat Detail Alat']);
+    }
+
+    public function test_riwayat_keeps_its_alat_when_the_template_form_is_deleted(): void
+    {
+        $alat = Alat::factory()->create(['id' => 'XRAY-01']);
+        $template = TemplateForm::factory()->create(['nama' => 'Form Xray Atas']);
+        $riwayat = RiwayatPengecekan::factory()->for(FormAlat::factory()->for($alat)->for($template, 'templateForm'), 'formAlat')->bagus()->create();
+
+        $template->delete();
+
+        $this->assertNull($riwayat->fresh()->formAlat->templateForm);
+        $this->get(route('admin.riwayat.index'))
+            ->assertOk()
+            ->assertSeeText(['XRAY-01', 'Lihat Detail Alat'])
+            ->assertDontSeeText('Form Xray Atas');
+    }
+
+    public function test_riwayat_and_form_alat_stay_when_the_pengguna_is_deleted(): void
+    {
+        $pengguna = Pengguna::factory()->create(['id' => 'yoga001']);
+        $sesi = SesiPengguna::factory()->for($pengguna, 'pengguna')->create();
+        $riwayat = RiwayatPengecekan::factory()->for($pengguna, 'pengguna')->bagus()->create();
+
+        $pengguna->delete();
+
+        $this->assertModelMissing($sesi);
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_pengguna' => null]);
+        $this->get(route('admin.riwayat.index'))->assertOk()->assertDontSeeText('yoga001');
+    }
+
+    public function test_riwayat_still_renders_when_its_form_alat_is_deleted(): void
+    {
+        $riwayat = RiwayatPengecekan::factory()->bagus()->create(['catatan' => 'catatan-yatim']);
+
+        $riwayat->formAlat->delete();
+
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id' => $riwayat->id, 'id_form_alat' => null]);
+        $this->get(route('admin.riwayat.index'))->assertOk()->assertSeeText('catatan-yatim');
     }
 
     public function test_index_shows_empty_state(): void

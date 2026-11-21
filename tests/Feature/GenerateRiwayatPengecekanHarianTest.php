@@ -35,6 +35,18 @@ class GenerateRiwayatPengecekanHarianTest extends TestCase
         }
     }
 
+    public function test_it_skips_form_alat_whose_alat_or_template_form_was_deleted(): void
+    {
+        $formAlat = FormAlat::factory()->create();
+        FormAlat::factory()->create()->alat->delete();
+        FormAlat::factory()->create()->templateForm->delete();
+
+        $this->artisan('riwayat-pengecekan:generate')->assertSuccessful();
+
+        $this->assertDatabaseCount('riwayat_pengecekan', 1);
+        $this->assertDatabaseHas('riwayat_pengecekan', ['id_form_alat' => $formAlat->id]);
+    }
+
     public function test_each_run_adds_a_new_set_of_pending_riwayat(): void
     {
         $formAlat = FormAlat::factory()->create();

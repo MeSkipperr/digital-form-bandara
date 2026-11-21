@@ -6,7 +6,7 @@
 <x-layouts.admin title="Detail Alat" active="alat" breadcrumb="Inspeksi Alat / Alat / Detail">
     <x-back-button :href="route('admin.alat.index')" />
 
-    <x-alert-messages class="mt-4" />
+    <x-alert-messages class="mt-4" :form-dengan-galat-sendiri="['tambah-alat', 'ubah-alat-*']" />
 
     <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <x-card class="px-6 pt-6 pb-6">

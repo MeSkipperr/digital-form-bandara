@@ -15,7 +15,7 @@
                 <thead class="border-b border-line-soft">
                     <tr>
                         <x-table-heading class="w-80">Pengguna</x-table-heading>
-                        <x-table-heading class="w-52 px-0">Username</x-table-heading>
+                        <x-table-heading class="w-52 px-0">ID</x-table-heading>
                         <x-table-heading class="w-44 px-0">Peran</x-table-heading>
                         <x-table-heading class="px-0">Status Akun</x-table-heading>
                         <x-table-heading class="w-20 text-right">Aksi</x-table-heading>

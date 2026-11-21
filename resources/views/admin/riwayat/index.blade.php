@@ -23,15 +23,16 @@
                     @forelse ($daftarRiwayat as $riwayat)
                         @php
                             $status = $daftarStatus[$riwayat->status];
+                            $alat = $riwayat->formAlat?->alat;
                         @endphp
                         <tr class="h-17 hover:bg-hover/60">
                             <td class="px-6 text-sm text-ink">{{ $riwayat->dicek_pada?->format('d/m/Y H:i') ?? '-' }}</td>
                             <td><x-badge :color="$status['warna']" :label="$status['label']" /></td>
-                            <td class="pr-4 text-sm font-bold text-ink">{{ $riwayat->formAlat->templateForm->nama }}</td>
+                            <td class="pr-4 text-sm font-bold text-ink">{{ $riwayat->formAlat?->templateForm?->nama ?? '-' }}</td>
                             <td class="pr-4">
-                                <p class="font-mono text-sm font-bold text-ink">{{ $riwayat->formAlat->id_alat }}</p>
-                                @if ($riwayat->formAlat->alat->model)
-                                    <p class="mt-0.5 text-xs text-muted">{{ $riwayat->formAlat->alat->model }}</p>
+                                <p class="font-mono text-sm font-bold text-ink">{{ $alat?->id ?? '-' }}</p>
+                                @if ($alat?->model)
+                                    <p class="mt-0.5 text-xs text-muted">{{ $alat->model }}</p>
                                 @endif
                             </td>
                             <td class="pr-4 text-sm text-ink">{{ $riwayat->catatan ?? '-' }}</td>
@@ -56,10 +57,10 @@
         @foreach ($daftarRiwayat as $riwayat)
             @php
                 $status = $daftarStatus[$riwayat->status];
-                $judul = $riwayat->formAlat->templateForm->nama;
-                $gambar = ltrim((string) $riwayat->formAlat->templateForm->path_gambar, '/');
-                $urlGambar = $gambar !== '' && Storage::disk('public')->exists($gambar) ? Storage::disk('public')->url($gambar) : null;
-                $model = $riwayat->formAlat->alat->model;
+                $templateForm = $riwayat->formAlat?->templateForm;
+                $alat = $riwayat->formAlat?->alat;
+                $judul = $templateForm?->nama;
+                $urlGambar = $templateForm?->urlGambar();
             @endphp
             <x-modal id="modal-riwayat-{{ $riwayat->id }}" title="Detail Riwayat Pengecekan" :description="$riwayat->kode()" width="w-190">
                 <h3 class="border-b border-line-soft pb-2.5 text-sm font-bold text-primary-dark">Informasi Pengecekan</h3>
@@ -74,11 +75,11 @@
                     </div>
                     <div class="flex min-h-10 items-center gap-3 py-2 sm:h-10 sm:gap-0 sm:py-0">
                         <dt class="w-2/5 shrink-0 text-xs text-muted sm:w-51">Judul</dt>
-                        <dd class="text-sm font-bold text-ink">{{ $judul }}</dd>
+                        <dd class="text-sm font-bold text-ink">{{ $judul ?? '-' }}</dd>
                     </div>
                     <div class="flex min-h-10 items-center gap-3 py-2 sm:h-10 sm:gap-0 sm:py-0">
                         <dt class="w-2/5 shrink-0 text-xs text-muted sm:w-51">Alat</dt>
-                        <dd class="text-sm font-bold text-ink">{{ $riwayat->formAlat->id_alat }}{{ $model ? ' — '.$model : '' }}</dd>
+                        <dd class="text-sm font-bold text-ink">{{ $alat ? $alat->id.($alat->model ? ' — '.$alat->model : '') : '-' }}</dd>
                     </div>
                     <div class="flex min-h-10 items-center gap-3 py-2.5 sm:gap-0">
                         <dt class="w-2/5 shrink-0 text-xs text-muted sm:w-51">Catatan</dt>
@@ -103,7 +104,9 @@
 
                 <x-slot:footer class="mt-5">
                     <x-button variant="secondary" class="flex-1 sm:w-25 sm:flex-none" data-modal-close>Tutup</x-button>
-                    <x-button :href="route('admin.alat.show', $riwayat->formAlat->id_alat)" class="flex-1 sm:w-46 sm:flex-none">Lihat Detail Alat</x-button>
+                    @if ($alat)
+                        <x-button :href="route('admin.alat.show', $alat)" class="flex-1 sm:w-46 sm:flex-none">Lihat Detail Alat</x-button>
+                    @endif
                 </x-slot:footer>
             </x-modal>
         @endforeach

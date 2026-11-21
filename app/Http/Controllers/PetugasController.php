@@ -46,21 +46,25 @@ class PetugasController extends Controller
 
     public function tampilForm(FormAlat $formAlat)
     {
+        abort_unless($formAlat->masihTerpasang(), 404);
+
         $formAlat->load(['alat.kategoriAlat', 'templateForm.tugas']);
 
-        $jumlahBagian = FormAlat::where('id_alat', $formAlat->id_alat)->count();
+        $jumlahBagian = $formAlat->alat->formAlat()->count();
 
         return view('petugas.form-pengecekan', [
-            'formAlat'     => $formAlat,
-            'alat'         => $formAlat->alat,
-            'template'     => $formAlat->templateForm,
-            'daftarTugas'  => $formAlat->templateForm->tugas,
+            'formAlat' => $formAlat,
+            'alat' => $formAlat->alat,
+            'template' => $formAlat->templateForm,
+            'daftarTugas' => $formAlat->templateForm->tugas,
             'jumlahBagian' => $jumlahBagian,
         ]);
     }
 
     public function simpanForm(Request $request, FormAlat $formAlat)
     {
+        abort_unless($formAlat->masihTerpasang(), 404);
+
         $formAlat->load(['alat', 'templateForm.tugas']);
         $daftarTugas = $formAlat->templateForm->tugas;
 
@@ -68,7 +72,7 @@ class PetugasController extends Controller
             'catatan' => ['nullable', 'string', 'max:1000'],
         ];
         foreach ($daftarTugas as $tugas) {
-            $rules['jawaban.' . $tugas->id] = ['required', 'in:bagus,kurang_bagus'];
+            $rules['jawaban.'.$tugas->id] = ['required', 'in:bagus,kurang_bagus'];
         }
 
         $validated = $request->validate($rules, [
@@ -83,15 +87,15 @@ class PetugasController extends Controller
         $poinBermasalah = [];
         foreach ($daftarTugas as $tugas) {
             if (($validated['jawaban'][$tugas->id] ?? '') === 'kurang_bagus') {
-                $poinBermasalah[] = '- ' . $tugas->nama . ' (Kurang Bagus)';
+                $poinBermasalah[] = '- '.$tugas->nama.' (Kurang Bagus)';
             }
         }
 
         $catatanFinal = $catatanUser;
         if (! empty($poinBermasalah)) {
-            $ringkasan = "Temuan:\n" . implode("\n", $poinBermasalah);
+            $ringkasan = "Temuan:\n".implode("\n", $poinBermasalah);
             $catatanFinal = $catatanUser !== ''
-                ? $catatanUser . "\n\n" . $ringkasan
+                ? $catatanUser."\n\n".$ringkasan
                 : $ringkasan;
         }
 
@@ -103,10 +107,10 @@ class PetugasController extends Controller
 
             $dataSimpan = [
                 'id_form_alat' => $formAlat->id,
-                'id_pengguna'  => Auth::id(),
-                'catatan'      => $catatanFinal !== '' ? $catatanFinal : null,
-                'status'       => $statusHasil,
-                'dicek_pada'   => now(),
+                'id_pengguna' => Auth::id(),
+                'catatan' => $catatanFinal !== '' ? $catatanFinal : null,
+                'status' => $statusHasil,
+                'dicek_pada' => now(),
             ];
 
             if ($riwayat) {
@@ -120,13 +124,13 @@ class PetugasController extends Controller
             ]);
         });
 
-        $jumlahBagian = FormAlat::where('id_alat', $formAlat->id_alat)->count();
+        $jumlahBagian = $formAlat->alat->formAlat()->count();
         if ($jumlahBagian > 1) {
             return redirect()->route('petugas.cek', $formAlat->id_alat)
-                ->with('success', 'Checklist ' . $formAlat->templateForm->nama . ' berhasil disimpan!');
+                ->with('success', 'Checklist '.$formAlat->templateForm->nama.' berhasil disimpan!');
         }
 
         return redirect()->route('petugas.scan')
-            ->with('success', 'Checklist ' . $formAlat->id_alat . ' berhasil disimpan!');
+            ->with('success', 'Checklist '.$formAlat->id_alat.' berhasil disimpan!');
     }
 }
