@@ -4,7 +4,7 @@
     input and the error messages, and app.js reopens its modal ([data-buka-ulang]). A picked image cannot be refilled.
 
     @var \App\Models\TemplateForm|null $templateForm
-    @var \Illuminate\Support\Collection<int, \App\Models\KategoriAlat> $daftarKategori
+    @var \Illuminate\Support\Collection<int, \App\Models\KategoriAlat> $daftarKategori  loaded with alat_count and template_form_count; kategori are added and managed inline like on the alat form
     @var string|null $kategoriAktif  preselected kategori for a new form
 --}}
 @php
@@ -43,15 +43,16 @@
         required
     />
 
-    <x-form.select
-        label="Kategori"
-        name="id_kategori_alat"
-        :options="['' => 'Pilih kategori'] + $daftarKategori->pluck('nama', 'id')->all()"
-        :selected="$formAktif ? old('id_kategori_alat') : ($templateForm?->id_kategori_alat ?? $kategoriAktif)"
-        :error="$galat('id_kategori_alat')"
-        surface="bg-white"
-        required
-    />
+    <div>
+        <x-form.label>Kategori</x-form.label>
+        @include('admin.alat.partials.daftar-kategori', [
+            'dapatDipilih' => true,
+            'kategoriTerpilih' => $formAktif ? old('id_kategori_alat') : ($templateForm?->id_kategori_alat ?? $kategoriAktif),
+        ])
+        @if ($pesan = $galat('id_kategori_alat'))
+            <p class="mt-1.5 text-xs text-danger" data-galat>{{ $pesan }}</p>
+        @endif
+    </div>
 
     @include('admin.form.partials.unggah-gambar', [
         'idInput' => 'gambar-form-'.($templateForm?->id ?? 'baru'),

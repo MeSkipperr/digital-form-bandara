@@ -311,6 +311,10 @@ const addKategoriToLists = (kategori, sourceList) => {
         }
 
         list.querySelector('[data-kategori-options]').append(option);
+
+        if (radio?.checked) {
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     });
 };
 

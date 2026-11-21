@@ -42,6 +42,21 @@ class TemplateFormControllerTest extends TestCase
         $this->assertSame(5, $response->viewData('daftarForm')->first()->tugas_count);
     }
 
+    public function test_form_modals_manage_kategori_inline_with_the_current_kategori_checked(): void
+    {
+        $xray = KategoriAlat::factory()->create(['nama' => 'X-Ray']);
+        $etd = KategoriAlat::factory()->create(['nama' => 'ETD']);
+        TemplateForm::factory()->for($etd, 'kategoriAlat')->create(['nama' => 'Form Uji Fungsi ETD']);
+
+        $this->get(route('admin.form.index'))
+            ->assertOk()
+            ->assertSeeText(['Pilih kategori', 'Tambah Kategori', 'Buka Kelola Kategori'])
+            ->assertSee('data-url="'.route('admin.kategori-alat.store').'"', false)
+            ->assertSee('name="id_kategori_alat" value="'.$etd->id.'" class="sr-only" checked', false)
+            ->assertSee('name="id_kategori_alat" value="'.$xray->id.'" class="sr-only"', false)
+            ->assertDontSee('name="id_kategori_alat" value="'.$xray->id.'" class="sr-only" checked', false);
+    }
+
     public function test_index_filters_by_kategori(): void
     {
         $xray = KategoriAlat::factory()->create(['nama' => 'X-Ray']);
