@@ -46,25 +46,7 @@
                 class="invisible fixed top-0 left-0 z-40 flex h-dvh w-4/5 max-w-xs shrink-0 -translate-x-full flex-col overflow-y-auto bg-sidebar px-3 pt-5 pb-6 shadow-xl transition-[translate,visibility] duration-300 ease-out data-terbuka:visible data-terbuka:translate-x-0 data-terbuka:transition-[translate] xl:visible xl:sticky xl:left-auto xl:z-auto xl:h-screen xl:w-60 xl:max-w-none xl:translate-x-0 xl:overflow-visible xl:shadow-none xl:transition-none"
                 data-sidebar
             >
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.dasbor') }}" class="flex min-w-0 flex-1 items-center gap-3 px-3">
-                        <span class="flex size-9 items-center justify-center rounded-lg bg-teal">
-                            <x-icon name="alat" class="size-5 text-white" />
-                        </span>
-                        <span class="flex flex-col">
-                            <span class="text-[15px] font-bold leading-[18px] text-white">X-Ray Check</span>
-                            <span class="text-[11px] leading-[13px] text-sidebar-muted">Inspeksi Alat</span>
-                        </span>
-                    </a>
-                    <button
-                        type="button"
-                        class="flex size-9 shrink-0 items-center justify-center rounded-lg text-sidebar-icon transition-colors hover:bg-white/10 hover:text-white xl:hidden"
-                        aria-label="Tutup menu"
-                        data-sidebar-tutup
-                    >
-                        <x-icon name="tutup" class="size-5" />
-                    </button>
-                </div>
+
 
                 <p class="mt-6.5 px-3 text-[11px] font-bold tracking-wide text-sidebar-label">MENU</p>
 
